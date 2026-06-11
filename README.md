@@ -2,8 +2,6 @@
 
 A fast, private, single-file new-tab homepage, built for the [Helium browser](https://helium.computer/) — and any other Chromium-based browser.
 
-![Element2](screenshot.png)
-
 Everything lives in one `index.html`: no build step, no frameworks, no trackers, no external fonts. Your settings never leave your browser.
 
 ## Features
