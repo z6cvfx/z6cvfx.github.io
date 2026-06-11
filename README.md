@@ -1,6 +1,6 @@
 # Helium — Homepage for the Helium Browser
 
-A clean, fast, fully offline new tab page built for the [Helium browser]([https://heliumhq.com](https://helium.computer/)), which ships with a blank homepage by default. Helium is a single `index.html` file with zero external dependencies — no npm, no frameworks, no build step.
+A clean, fast, fully offline new tab page built for the [Helium browser](https://helium.computer) — a privacy-first, Chromium-based browser with no ads, no telemetry, and no Google bloat. Helium ships with a blank new tab page by default, so this fills it. It's a single `index.html` file with zero external dependencies — no npm, no frameworks, no build step.
 
 ---
 
@@ -62,19 +62,32 @@ The settings panel is built entirely with native HTML form elements — no UI li
 
 ---
 
-## Installation
+## Using this homepage
 
-1. Download `index.html`
-2. In Helium, set your homepage to the local file path or host it at a URL (e.g. GitHub Pages)
-3. That's it — no install, no build
+### Option 1 — Use the hosted version (no download needed)
 
-### Hosting on GitHub Pages
+The homepage is already live at:
 
 ```
-https://yourusername.github.io
+https://z6cvfx.github.io
 ```
 
-Push `index.html` (lowercase) to the root of a repo named `yourusername.github.io`, enable GitHub Pages from `main` branch in Settings → Pages, and your homepage will be live within a minute.
+Anyone can point their Helium browser at this URL and use it instantly — no download, no setup, no file to manage. Your settings and quick links are saved in your own browser's `localStorage`, so they stay private to you.
+
+To set it as your Helium new tab page:
+
+1. Go to `helium://flags/#custom-ntp`
+2. Enable the **custom new tab page** flag and set the value to `https://z6cvfx.github.io`
+3. Go to `helium://settings/onStartup` and select **"Open the new tab page"**
+4. Open a new tab — done
+
+### Option 2 — Download and host it yourself
+
+If you'd rather self-host or customise the code:
+
+1. Download `index.html` from this repo
+2. Either open it directly as a local file (`file:///path/to/index.html`) or push it to your own GitHub Pages repo
+3. Point Helium's custom NTP flag at your local path or hosted URL using the same steps above
 
 ---
 
