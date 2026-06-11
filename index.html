@@ -141,6 +141,7 @@
     @media (prefers-reduced-motion: reduce) {
       .reveal, #weather, #settings-btn { animation: none !important; opacity: 1 !important; }
       #suggestions.open { animation: none !important; }
+      #welcome-card, .w-step.on, #w-bg-name.tick { animation: none !important; }
       #aurora .blob { animation: none !important; }
       body { animation: none !important; }
     }
@@ -625,6 +626,107 @@
       resize: none;
     }
     #notes-text::placeholder { color: var(--muted); }
+
+    /* ====== First-boot welcome ====== */
+    #welcome {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    #welcome[hidden] { display: none; }
+    #welcome.closing { animation: wFadeOut 0.4s ease forwards; pointer-events: none; }
+    @keyframes wFadeOut { to { opacity: 0; } }
+    #welcome-card {
+      /* own theme-coloured surface — same token re-point as #panel */
+      --fg: var(--theme-fg);
+      --muted: var(--theme-muted);
+      width: min(460px, 100%);
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      padding: 2rem 2rem 1.5rem;
+      box-shadow: var(--shadow-panel);
+      text-align: center;
+      animation: wCardIn 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    @keyframes wCardIn { from { opacity: 0; transform: translateY(18px) scale(0.97); } }
+    #welcome-card h1 {
+      margin: 0.9rem 0 0.4rem;
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    #welcome-card h2 {
+      margin: 0 0 0.35rem;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    #welcome-card p { margin: 0.3rem 0; color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+    #w-icon { width: 40px; height: 40px; border-radius: 10px; }
+    .w-step { display: none; min-height: 13rem; }
+    .w-step.on { display: flex; flex-direction: column; justify-content: center; animation: wStepIn 0.32s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .w-step.on.from-back { animation-name: wStepInBack; }
+    @keyframes wStepIn { from { opacity: 0; transform: translateX(26px); } }
+    @keyframes wStepInBack { from { opacity: 0; transform: translateX(-26px); } }
+    .w-options { display: flex; flex-wrap: wrap; gap: 0.55rem; justify-content: center; margin: 1.1rem 0 0.4rem; }
+    .w-opt {
+      font-family: inherit;
+      font-size: 0.92rem;
+      color: var(--fg);
+      background: var(--field-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.55rem 0.95rem;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+    .w-opt:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+    .w-opt.sel { border-color: var(--accent); background: var(--hover); font-weight: 600; }
+    .w-opt small { display: block; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+    .w-cycler { display: flex; align-items: center; justify-content: center; gap: 0.9rem; margin: 1.1rem 0 0.7rem; }
+    .w-arrow {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--field-bg);
+      color: var(--fg);
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .w-arrow:hover { border-color: var(--border-strong); background: var(--hover); }
+    #w-bg-name { min-width: 10rem; font-family: var(--font-display); font-size: 1.02rem; }
+    #w-bg-name.tick { animation: wStepIn 0.25s ease; }
+    .w-swatches { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; min-height: 30px; margin-bottom: 0.3rem; }
+    .w-swatch {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .w-swatch:hover { transform: scale(1.12); }
+    .w-swatch.sel { border-color: var(--accent); transform: scale(1.12); }
+    .w-fields { text-align: left; margin: 1rem 0 0.4rem; }
+    .w-hint { font-size: 0.75rem; color: var(--muted); }
+    .w-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
+    .w-dots { display: flex; gap: 0.45rem; }
+    .w-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); transition: background 0.2s ease, transform 0.2s ease; }
+    .w-dots i.on { background: var(--accent); transform: scale(1.3); }
   </style>
 </head>
 <body>
@@ -674,6 +776,67 @@
                 aria-label="Notes" spellcheck="false"></textarea>
     </div>
     <button id="notes-btn" title="Notes" aria-label="Notes" aria-expanded="false">✎</button>
+  </div>
+
+  <!-- First-boot welcome (shown only when no saved settings exist yet) -->
+  <div id="welcome" hidden>
+    <div id="welcome-card" role="dialog" aria-modal="true" aria-label="Welcome">
+      <div class="w-step" data-step="0">
+        <div><img id="w-icon" alt=""></div>
+        <h1>Welcome to Element2</h1>
+        <p>A fast, private new-tab page. Let's make it yours — it takes about
+           twenty seconds, and everything can be changed later behind the ⚙ gear.</p>
+      </div>
+      <div class="w-step" data-step="1">
+        <h2>Pick a theme</h2>
+        <p>Applied live — watch the page behind this card.</p>
+        <div class="w-options" id="w-theme">
+          <button class="w-opt sel" data-value="auto">Auto<small>follows your system</small></button>
+          <button class="w-opt" data-value="light">Light<small>bright &amp; clean</small></button>
+          <button class="w-opt" data-value="dark">Dark<small>easy on the eyes</small></button>
+        </div>
+      </div>
+      <div class="w-step" data-step="2">
+        <h2>Choose a search engine</h2>
+        <div class="w-options" id="w-engine"></div>
+        <div class="w-fields">
+          <div class="field">
+            <label for="w-suggest">Search suggestions</label>
+            <input type="checkbox" id="w-suggest" checked>
+          </div>
+        </div>
+        <p class="w-hint">Suggestions are fetched from DuckDuckGo as you type.</p>
+      </div>
+      <div class="w-step" data-step="3">
+        <h2>Pick a background</h2>
+        <div class="w-cycler">
+          <button class="w-arrow" id="w-bg-prev" aria-label="Previous background">‹</button>
+          <div id="w-bg-name" aria-live="polite">Theme default</div>
+          <button class="w-arrow" id="w-bg-next" aria-label="Next background">›</button>
+        </div>
+        <div class="w-swatches" id="w-palettes"></div>
+        <p class="w-hint">Previewing live behind this card. Image backgrounds live in ⚙ settings.</p>
+      </div>
+      <div class="w-step" data-step="4">
+        <h2>Last touches</h2>
+        <div class="w-fields">
+          <div class="field">
+            <label for="w-name">Your name (for the greeting)</label>
+            <input type="text" id="w-name" placeholder="Optional">
+          </div>
+          <div class="field">
+            <label for="w-weather">Show the weather</label>
+            <input type="checkbox" id="w-weather" checked>
+          </div>
+        </div>
+        <p class="w-hint">All set — Finish saves your choices.</p>
+      </div>
+      <div class="w-nav">
+        <button class="btn" id="w-back">Skip</button>
+        <div class="w-dots" id="w-dots"></div>
+        <button class="btn primary" id="w-next">Get started</button>
+      </div>
+    </div>
   </div>
 
   <!-- ===== Settings panel ===== -->
@@ -1270,6 +1433,7 @@
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (overlay.classList.contains("open") || ctxMenu.classList.contains("open")) return;
+    if (welcomeEl.isConnected && !welcomeEl.hidden) return; // first-boot welcome owns the keys
     const a = document.activeElement;
     if (a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" ||
               a.tagName === "SELECT" || a.isContentEditable)) return;
@@ -1968,6 +2132,153 @@
   });
 
 
+  /* ----- First-boot welcome ----- */
+  const welcomeEl = document.getElementById("welcome");
+
+  function initWelcome() {
+    let firstBoot = false;
+    try {
+      firstBoot = localStorage.getItem(STORAGE_KEY) === null;
+      // storage must also be writable, or the welcome would return every boot
+      localStorage.setItem("helium-homepage-probe", "1");
+      localStorage.removeItem("helium-homepage-probe");
+    } catch (e) { firstBoot = false; }
+    if (!firstBoot) { welcomeEl.remove(); return; }
+
+    const card  = document.getElementById("welcome-card");
+    const wBack = document.getElementById("w-back");
+    const wNext = document.getElementById("w-next");
+    const wDots = document.getElementById("w-dots");
+    const steps = [...welcomeEl.querySelectorAll(".w-step")];
+    const W_BGS = [
+      ["theme", "Theme default"],
+      ["aurora", "Aurora"],
+      ["gradient", "Gradient"],
+      ["animated", "Animated gradient"],
+      ["solid", "Solid colour"]
+    ];
+    let stepIdx = 0;
+    let bgIdx = 0;
+
+    // Hero icon: reuse the embedded favicon instead of duplicating its bytes.
+    const iconLink = document.querySelector('link[rel="icon"]');
+    if (iconLink) document.getElementById("w-icon").src = iconLink.href;
+
+    steps.forEach(() => wDots.appendChild(document.createElement("i")));
+
+    // Engine pills ("custom" stays a settings-only feature).
+    const engineWrap = document.getElementById("w-engine");
+    Object.entries(SEARCH_ENGINES).forEach(([key, e]) => {
+      if (!e.url) return;
+      const b = document.createElement("button");
+      b.className = "w-opt" + (key === config.searchEngine ? " sel" : "");
+      b.textContent = e.name;
+      b.addEventListener("click", () => {
+        engineWrap.querySelectorAll(".w-opt").forEach((x) => x.classList.remove("sel"));
+        b.classList.add("sel");
+        config.searchEngine = key;
+        updateSearchPlaceholder();
+      });
+      engineWrap.appendChild(b);
+    });
+
+    // Theme choices apply instantly to the page behind the card.
+    document.getElementById("w-theme").addEventListener("click", (e) => {
+      const b = e.target.closest(".w-opt");
+      if (!b) return;
+      document.querySelectorAll("#w-theme .w-opt").forEach((x) => x.classList.remove("sel"));
+      b.classList.add("sel");
+      config.theme = b.dataset.value;
+      applyTheme();
+    });
+
+    // Background cycler + preset palette chips, all live-previewed.
+    const bgName = document.getElementById("w-bg-name");
+    const palettes = document.getElementById("w-palettes");
+    Object.values(BG_PRESETS).forEach((p) => {
+      const b = document.createElement("button");
+      b.className = "w-swatch";
+      b.title = p.name;
+      b.setAttribute("aria-label", p.name + " palette");
+      b.style.background = `linear-gradient(135deg, ${p.color1} 50%, ${p.color2} 50%)`;
+      b.addEventListener("click", () => {
+        palettes.querySelectorAll(".w-swatch").forEach((x) => x.classList.remove("sel"));
+        b.classList.add("sel");
+        config.background.color1 = p.color1;
+        config.background.color2 = p.color2;
+        applyBackground();
+      });
+      palettes.appendChild(b);
+    });
+    function cycleBg(delta) {
+      bgIdx = (bgIdx + delta + W_BGS.length) % W_BGS.length;
+      config.background.style = W_BGS[bgIdx][0];
+      applyBackground();
+      bgName.textContent = W_BGS[bgIdx][1];
+      bgName.classList.remove("tick");
+      void bgName.offsetWidth; // restart the little label animation
+      bgName.classList.add("tick");
+      palettes.style.visibility = bgIdx === 0 ? "hidden" : "visible";
+    }
+    document.getElementById("w-bg-prev").addEventListener("click", () => cycleBg(-1));
+    document.getElementById("w-bg-next").addEventListener("click", () => cycleBg(1));
+    palettes.style.visibility = "hidden"; // starts on "Theme default"
+
+    function showStep(i, goingBack) {
+      stepIdx = i;
+      steps.forEach((s, idx) => {
+        s.classList.toggle("on", idx === i);
+        s.classList.toggle("from-back", idx === i && !!goingBack);
+      });
+      [...wDots.children].forEach((d, idx) => d.classList.toggle("on", idx === i));
+      wBack.textContent = i === 0 ? "Skip" : "Back";
+      wNext.textContent = i === 0 ? "Get started" : (i === steps.length - 1 ? "Finish" : "Next");
+    }
+
+    function finish() {
+      config.userName = document.getElementById("w-name").value.trim();
+      config.weather.enabled = document.getElementById("w-weather").checked;
+      config.searchSuggestions = document.getElementById("w-suggest").checked;
+      saveConfig(config);
+      updateClock(); loadWeather(); updateSearchPlaceholder();
+      welcomeEl.classList.add("closing");
+      setTimeout(() => {
+        welcomeEl.remove();
+        // Replay the page's staggered entrance for the reveal moment.
+        document.querySelectorAll(".reveal").forEach((el) => {
+          el.classList.remove("reveal");
+          void el.offsetWidth;
+          el.classList.add("reveal");
+        });
+        input.focus();
+      }, 400);
+    }
+
+    wNext.addEventListener("click", () => {
+      if (stepIdx === steps.length - 1) finish();
+      else showStep(stepIdx + 1);
+    });
+    // "Skip" on the first step finishes with the untouched defaults.
+    wBack.addEventListener("click", () => {
+      if (stepIdx === 0) finish();
+      else showStep(stepIdx - 1, true);
+    });
+
+    // Keep Tab cycling inside the dialog.
+    welcomeEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const f = [...card.querySelectorAll("button, input")].filter((el) => el.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+
+    showStep(0);
+    welcomeEl.hidden = false;
+    wNext.focus();
+  }
+
   /* ----- Init ----- */
   applyTheme();
   applyBackground();
@@ -1975,6 +2286,7 @@
   loadWeather();
   updateSearchPlaceholder();
   renderNotes();
+  initWelcome();
   setInterval(loadWeather, 15 * 60 * 1000); // refresh weather every 15 min
   window.addEventListener("load", () => input.focus());
   </script>
