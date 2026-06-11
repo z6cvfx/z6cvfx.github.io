@@ -57,6 +57,9 @@
          set from JS based on background brightness. */
       --glass-bg: rgba(255,255,255,0.45);
       --glass-border: rgba(255,255,255,0.6);
+      /* near-opaque variant for surfaces that float over page content
+         (suggestions dropdown), where see-through hurts readability */
+      --glass-strong: rgba(255,255,255,0.78);
       --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
     }
@@ -137,6 +140,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .reveal, #weather, #settings-btn { animation: none !important; opacity: 1 !important; }
+      #suggestions.open { animation: none !important; }
       #aurora .blob { animation: none !important; }
       body { animation: none !important; }
     }
@@ -276,7 +280,11 @@
     #weather .w-cond { color: var(--muted); font-weight: 400; font-size: 0.85rem; }
 
     /* ====== Search ====== */
-    #search-wrap { position: relative; width: min(560px, 90vw); margin-top: 3rem; }
+    /* z-index lifts the whole search stacking context above #links — the
+       entrance animations (fill: forwards) leave each .reveal block as its
+       own stacking context, and later DOM order would otherwise paint the
+       quick links over the suggestions dropdown. */
+    #search-wrap { position: relative; width: min(560px, 90vw); margin-top: 3rem; z-index: 20; }
 
     #search {
       width: 100%;
@@ -293,6 +301,43 @@
     }
     #search::placeholder { color: var(--muted); }
     #search:focus { border-color: var(--border-strong); box-shadow: var(--shadow-hover); }
+
+    /* ----- Search suggestions dropdown ----- */
+    @keyframes sugIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    #suggestions {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      left: 0;
+      right: 0;
+      display: none;
+      padding: 0.35rem;
+      background: var(--field-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-hover);
+      z-index: 10;
+      text-align: left;
+    }
+    #suggestions.open { display: block; animation: sugIn 0.16s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .sug {
+      padding: 0.55rem 0.9rem;
+      border-radius: 9px;
+      font-size: 0.98rem;
+      color: var(--fg);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sug .typed { color: var(--muted); }
+    .sug:hover, .sug.sel { background: var(--hover); }
+    body.custom-bg #suggestions {
+      background: var(--glass-strong);
+      border-color: var(--glass-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    body.custom-bg .sug:hover, body.custom-bg .sug.sel { background: var(--glass-border); }
 
     /* ====== Quick links ====== */
     #links {
@@ -591,7 +636,10 @@
       id="search" type="text" placeholder="Search the web…"
       autocomplete="off" autocorrect="off" autocapitalize="off"
       spellcheck="false" aria-label="Search"
+      role="combobox" aria-autocomplete="list" aria-expanded="false"
+      aria-controls="suggestions"
       title="Enter to search — Alt+Enter opens a new tab">
+    <div id="suggestions" role="listbox" aria-label="Search suggestions"></div>
   </div>
 
   <div id="links" class="reveal"></div>
@@ -643,6 +691,15 @@
         <input type="text" id="set-custom-engine" placeholder="https://example.com/search?q=%s">
       </div>
       <p class="hint" id="custom-engine-hint">%s is replaced with your query (appended if omitted).</p>
+      <div class="field">
+        <label for="set-suggest">Search suggestions</label>
+        <input type="checkbox" id="set-suggest">
+      </div>
+      <div class="field" id="suggest-relay-field">
+        <label for="set-suggest-relay">Suggestions relay URL</label>
+        <input type="text" id="set-suggest-relay" placeholder="Optional — https://…/?q=%s">
+      </div>
+      <p class="hint" id="suggest-relay-hint">Suggestions are fetched from DuckDuckGo as you type. If none appear (the official API refuses cross-site reads on some hosts), point this at a relay you control — %s is replaced with the query.</p>
       <div class="field">
         <label for="set-favicons">Use site icons (favicons)</label>
         <input type="checkbox" id="set-favicons">
@@ -783,6 +840,11 @@
     clockFormat: "24hr",                 // "12hr" | "24hr"
     searchEngine: "duckduckgo",          // key into SEARCH_ENGINES
     customSearchUrl: "",                 // used when searchEngine is "custom"; %s = query
+    // Search suggestions, fetched from DuckDuckGo's autocomplete API as you
+    // type. suggestionsRelay (optional) routes the call through a URL you
+    // control (%s = query) for hosts that can't read the API cross-origin.
+    searchSuggestions: true,
+    suggestionsRelay: "",
     useFavicons: false,                  // pull real favicons for tiles
     faviconSource: "duckduckgo",         // "duckduckgo" | "google" (sharper, less private)
     openInNewTab: false,                 // quick links open in a new tab
@@ -1070,9 +1132,118 @@
     input.placeholder = `Search ${target}…`;
   }
 
+  /* ----- Search suggestions (DuckDuckGo autocomplete) -----
+     Fetched straight from the official API. Note: DDG currently sends no
+     Access-Control-Allow-Origin header, so cross-origin hosts may be unable
+     to read the response — failures are silent and the box simply stays
+     closed. config.suggestionsRelay can route the call through a CORS-
+     friendly relay the user controls. */
+  const sugBox = document.getElementById("suggestions");
+  let sugItems = [];   // current suggestion strings
+  let sugIndex = -1;   // selected row; -1 = the user's own typed text
+  let sugTyped = "";   // what the user actually typed (restored on Escape)
+  let sugTimer = 0;
+  let sugAbort = null;
+  let sugFails = 0;    // consecutive fetch failures — back off a blocked endpoint
+  function resetSuggestBackoff() { sugFails = 0; }
+
+  function suggestUrlFor(q) {
+    const enc = encodeURIComponent(q);
+    const relay = String(config.suggestionsRelay || "").trim();
+    if (relay) return relay.includes("%s") ? relay.replace("%s", enc) : relay + enc;
+    return "https://duckduckgo.com/ac/?q=" + enc + "&type=list";
+  }
+  // Accepts both shapes the API serves: ["q",["a","b"]] and [{phrase:"a"}].
+  function parseSuggestions(data) {
+    if (Array.isArray(data) && Array.isArray(data[1])) return data[1];
+    if (Array.isArray(data)) return data.map((x) => x && x.phrase).filter(Boolean);
+    return [];
+  }
+  function closeSuggestions() {
+    sugBox.classList.remove("open");
+    sugBox.innerHTML = "";
+    sugItems = []; sugIndex = -1;
+    input.removeAttribute("aria-activedescendant");
+    input.setAttribute("aria-expanded", "false");
+  }
+  function renderSuggestions() {
+    sugBox.innerHTML = "";
+    sugItems.forEach((s, i) => {
+      const row = document.createElement("div");
+      row.className = "sug";
+      row.id = "sug-" + i;
+      row.setAttribute("role", "option");
+      row.setAttribute("aria-selected", "false");
+      // Mute the part already typed; the completion carries the weight.
+      if (sugTyped && s.toLowerCase().startsWith(sugTyped.toLowerCase())) {
+        const head = document.createElement("span");
+        head.className = "typed";
+        head.textContent = s.slice(0, sugTyped.length);
+        row.appendChild(head);
+        row.appendChild(document.createTextNode(s.slice(sugTyped.length)));
+      } else {
+        row.textContent = s;
+      }
+      row.addEventListener("pointerdown", (e) => e.preventDefault()); // keep input focus
+      row.addEventListener("click", () => { input.value = s; closeSuggestions(); runSearch(s); });
+      sugBox.appendChild(row);
+    });
+    sugBox.classList.toggle("open", sugItems.length > 0);
+    input.setAttribute("aria-expanded", String(sugItems.length > 0));
+  }
+  function moveSuggestion(delta) {
+    if (!sugItems.length) return;
+    sugIndex += delta;
+    if (sugIndex < -1) sugIndex = sugItems.length - 1;
+    else if (sugIndex >= sugItems.length) sugIndex = -1;
+    input.value = sugIndex === -1 ? sugTyped : sugItems[sugIndex];
+    [...sugBox.children].forEach((el, i) => {
+      el.classList.toggle("sel", i === sugIndex);
+      el.setAttribute("aria-selected", String(i === sugIndex));
+    });
+    if (sugIndex >= 0) input.setAttribute("aria-activedescendant", "sug-" + sugIndex);
+    else input.removeAttribute("aria-activedescendant");
+  }
+  async function fetchSuggestions(q) {
+    if (sugAbort) sugAbort.abort();
+    const ctrl = new AbortController();
+    sugAbort = ctrl;
+    try {
+      const res = await fetch(suggestUrlFor(q), { signal: ctrl.signal });
+      if (!res.ok) return;
+      const list = parseSuggestions(await res.json()).slice(0, 8).map(String);
+      if (ctrl !== sugAbort || input.value.trim() !== q) return; // stale response
+      sugTyped = q;
+      sugItems = list;
+      sugIndex = -1;
+      sugFails = 0;
+      renderSuggestions();
+    } catch (e) {
+      // Aborts are routine; real failures (offline, CORS-blocked host) count
+      // toward the backoff so a blocked endpoint isn't hit on every keystroke.
+      if (!(e && e.name === "AbortError")) sugFails++;
+    }
+  }
+
+  input.addEventListener("input", () => {
+    const q = input.value.trim();
+    sugTyped = q; // typing always resets the restore point
+    clearTimeout(sugTimer);
+    if (!config.searchSuggestions || !q || sugFails >= 3) { closeSuggestions(); return; }
+    sugTimer = setTimeout(() => fetchSuggestions(q), 160); // debounce keystrokes
+  });
+  input.addEventListener("blur", closeSuggestions);
+
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") runSearch(input.value, e.altKey);
-    else if (e.key === "Escape") input.blur();
+    const open = sugBox.classList.contains("open");
+    if (e.key === "ArrowDown" && open) { e.preventDefault(); moveSuggestion(1); }
+    else if (e.key === "ArrowUp" && open) { e.preventDefault(); moveSuggestion(-1); }
+    else if (e.key === "Enter") { closeSuggestions(); runSearch(input.value, e.altKey); }
+    else if (e.key === "Escape") {
+      if (open) { input.value = sugTyped; closeSuggestions(); }
+      else input.blur();
+    }
+    else if (e.key === "Tab") closeSuggestions();
   });
 
   // Type anywhere to search: a printable key (or "/") pressed while no other
@@ -1168,11 +1339,13 @@
       root.style.setProperty("--muted", "rgba(255,255,255,0.7)");
       root.style.setProperty("--glass-bg", "rgba(255,255,255,0.10)");
       root.style.setProperty("--glass-border", "rgba(255,255,255,0.22)");
+      root.style.setProperty("--glass-strong", "rgba(18,20,26,0.68)");
     } else {
       root.style.setProperty("--fg", "#16181d");
       root.style.setProperty("--muted", "rgba(0,0,0,0.55)");
       root.style.setProperty("--glass-bg", "rgba(255,255,255,0.45)");
       root.style.setProperty("--glass-border", "rgba(255,255,255,0.65)");
+      root.style.setProperty("--glass-strong", "rgba(255,255,255,0.78)");
     }
   }
 
@@ -1191,7 +1364,7 @@
     body.style.backgroundAttachment = ""; body.style.animation = "";
     bgImageEl.style.backgroundImage = ""; bgImageEl.style.filter = "";
     bgImageEl.style.inset = "";
-    ["--fg","--muted","--glass-bg","--glass-border","--aurora1","--aurora2"]
+    ["--fg","--muted","--glass-bg","--glass-border","--glass-strong","--aurora1","--aurora2"]
       .forEach((p) => root.style.removeProperty(p));
     if (bgObjectUrl) { URL.revokeObjectURL(bgObjectUrl); bgObjectUrl = null; }
 
@@ -1267,6 +1440,8 @@
   const setClock  = document.getElementById("set-clock");
   const setEngine = document.getElementById("set-engine");
   const setCustomEngine = document.getElementById("set-custom-engine");
+  const setSuggest = document.getElementById("set-suggest");
+  const setSuggestRelay = document.getElementById("set-suggest-relay");
   const setFav    = document.getElementById("set-favicons");
   const setFavSource = document.getElementById("set-favicon-source");
   const setNewTab = document.getElementById("set-newtab");
@@ -1386,8 +1561,14 @@
   function updateFaviconFieldVisibility() {
     document.getElementById("favicon-source-field").style.display = setFav.checked ? "" : "none";
   }
+  function updateSuggestFieldVisibility() {
+    const on = setSuggest.checked;
+    document.getElementById("suggest-relay-field").style.display = on ? "" : "none";
+    document.getElementById("suggest-relay-hint").style.display = on ? "" : "none";
+  }
   setEngine.addEventListener("change", updateEngineFieldVisibility);
   setFav.addEventListener("change", updateFaviconFieldVisibility);
+  setSuggest.addEventListener("change", updateSuggestFieldVisibility);
 
   /* Live preview: background (and theme) changes apply immediately while the
      panel is open; Cancel/Escape reverts to the saved config. */
@@ -1454,6 +1635,8 @@
     setClock.value = config.clockFormat;
     setEngine.value = SEARCH_ENGINES[config.searchEngine] ? config.searchEngine : "duckduckgo";
     setCustomEngine.value = config.customSearchUrl || "";
+    setSuggest.checked = !!config.searchSuggestions;
+    setSuggestRelay.value = config.suggestionsRelay || "";
     setFav.checked = !!config.useFavicons;
     setFavSource.value = config.faviconSource === "google" ? "google" : "duckduckgo";
     setNewTab.checked = !!config.openInNewTab;
@@ -1482,6 +1665,7 @@
     updateBgFieldVisibility();
     updateEngineFieldVisibility();
     updateFaviconFieldVisibility();
+    updateSuggestFieldVisibility();
 
     linkEditor.innerHTML = "";
     config.quickLinks.forEach((link) => linkEditor.appendChild(makeLinkRow(link)));
@@ -1514,6 +1698,8 @@
       clockFormat: setClock.value,
       searchEngine: setEngine.value,
       customSearchUrl: setCustomEngine.value.trim(),
+      searchSuggestions: setSuggest.checked,
+      suggestionsRelay: setSuggestRelay.value.trim(),
       useFavicons: setFav.checked,
       faviconSource: setFavSource.value,
       openInNewTab: setNewTab.checked,
@@ -1591,7 +1777,7 @@
     saveConfig(config);
     closePanel(); // re-applies theme + background from the new config
     updateClock(); renderLinks(); loadWeather();
-    updateSearchPlaceholder(); renderNotes();
+    updateSearchPlaceholder(); renderNotes(); resetSuggestBackoff();
   });
   document.getElementById("reset").addEventListener("click", () => {
     if (!confirm("Reset all settings to their defaults? This also removes any stored background image.")) return;
@@ -1600,7 +1786,7 @@
     populatePanel();
     panelSnapshot = JSON.stringify(readPanel()); // panel now matches saved state
     applyTheme(); updateClock(); applyBackground(); renderLinks(); loadWeather();
-    updateSearchPlaceholder(); renderNotes();
+    updateSearchPlaceholder(); renderNotes(); resetSuggestBackoff();
     idbDelete(BG_IMAGE_KEY).catch(() => {});
   });
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) requestClosePanel(); });
@@ -1754,7 +1940,7 @@
         populatePanel();
         panelSnapshot = JSON.stringify(readPanel()); // panel now matches saved state
         applyTheme(); updateClock(); applyBackground(); renderLinks(); loadWeather();
-        updateSearchPlaceholder(); renderNotes();
+        updateSearchPlaceholder(); renderNotes(); resetSuggestBackoff();
       } catch (err) {
         alert("That file doesn't look like a valid settings export.");
       }
