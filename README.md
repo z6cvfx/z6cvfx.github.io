@@ -1,7 +1,6 @@
-[README.md](https://github.com/user-attachments/files/28853968/README.md)
 # Helium — Homepage for the Helium Browser
 
-A clean, fast, fully offline new tab page built for the [Helium browser](https://heliumhq.com), which ships with a blank homepage by default. Helium is a single `index.html` file with zero external dependencies — no npm, no frameworks, no build step.
+A clean, fast, fully offline new tab page built for the [Helium browser]([https://heliumhq.com](https://helium.computer/)), which ships with a blank homepage by default. Helium is a single `index.html` file with zero external dependencies — no npm, no frameworks, no build step.
 
 ---
 
