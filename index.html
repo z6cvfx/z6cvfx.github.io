@@ -1150,7 +1150,12 @@
   function suggestUrlFor(q) {
     const enc = encodeURIComponent(q);
     const relay = String(config.suggestionsRelay || "").trim();
-    if (relay) return relay.includes("%s") ? relay.replace("%s", enc) : relay + enc;
+    if (relay) {
+      if (relay.includes("%s")) return relay.replace("%s", enc);
+      // No placeholder — append as a proper q parameter rather than naive
+      // concatenation (which would turn the query into a path segment).
+      return relay + (relay.includes("?") ? "&q=" : "?q=") + enc;
+    }
     return "https://duckduckgo.com/ac/?q=" + enc + "&type=list";
   }
   // Accepts both shapes the API serves: ["q",["a","b"]] and [{phrase:"a"}].
