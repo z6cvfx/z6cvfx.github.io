@@ -727,6 +727,335 @@
     .w-dots { display: flex; gap: 0.45rem; }
     .w-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); transition: background 0.2s ease, transform 0.2s ease; }
     .w-dots i.on { background: var(--accent); transform: scale(1.3); }
+  
+    /* ============================================================
+       REFINEMENT LAYER — purely additive polish on top of base CSS.
+       Tweaks tokens, typography, depth, and micro-interactions to
+       give the page a more crafted, detailed feel without changing
+       layout or JS behavior.
+       ============================================================ */
+
+    :root {
+      --bg: #f6f5f2;
+      --fg: #14161a;
+      --muted: #6b7280;
+      --theme-fg: #14161a;
+      --theme-muted: #6b7280;
+      --field-bg: #ffffff;
+      --border: #e6e4df;
+      --border-strong: #c9c6bf;
+      --accent: #3b3a36;
+      --hover: #efece6;
+      --selected: #e7e3da;
+      --shadow:
+        0 1px 0 rgba(255,255,255,0.8) inset,
+        0 1px 2px rgba(17,17,17,0.04),
+        0 8px 24px -10px rgba(17,17,17,0.10);
+      --shadow-hover:
+        0 1px 0 rgba(255,255,255,0.9) inset,
+        0 2px 6px rgba(17,17,17,0.06),
+        0 18px 40px -14px rgba(17,17,17,0.18);
+      --shadow-panel:
+        0 1px 0 rgba(255,255,255,0.9) inset,
+        0 30px 80px -20px rgba(17,17,17,0.30),
+        0 12px 30px -10px rgba(17,17,17,0.18);
+      --ring: 0 0 0 4px rgba(60, 90, 200, 0.14);
+      --accent-tint: 99, 132, 220; /* soft indigo, used sparingly */
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not(.theme-light) {
+        --bg: #0e0f12;
+        --fg: #ececec;
+        --muted: #8a8f98;
+        --theme-fg: #ececec;
+        --theme-muted: #8a8f98;
+        --field-bg: #16181d;
+        --border: #24262c;
+        --border-strong: #353841;
+        --accent: #b8bcc4;
+        --hover: #1c1f25;
+        --selected: #232730;
+        --shadow:
+          0 1px 0 rgba(255,255,255,0.04) inset,
+          0 1px 2px rgba(0,0,0,0.45),
+          0 12px 28px -12px rgba(0,0,0,0.55);
+        --shadow-hover:
+          0 1px 0 rgba(255,255,255,0.06) inset,
+          0 2px 6px rgba(0,0,0,0.5),
+          0 22px 50px -16px rgba(0,0,0,0.7);
+        --shadow-panel:
+          0 1px 0 rgba(255,255,255,0.05) inset,
+          0 34px 90px -24px rgba(0,0,0,0.75);
+        --ring: 0 0 0 4px rgba(120, 150, 230, 0.22);
+      }
+    }
+    :root.theme-dark {
+      --bg: #0e0f12;
+      --fg: #ececec;
+      --muted: #8a8f98;
+      --theme-fg: #ececec;
+      --theme-muted: #8a8f98;
+      --field-bg: #16181d;
+      --border: #24262c;
+      --border-strong: #353841;
+      --accent: #b8bcc4;
+      --hover: #1c1f25;
+      --selected: #232730;
+      --shadow:
+        0 1px 0 rgba(255,255,255,0.04) inset,
+        0 1px 2px rgba(0,0,0,0.45),
+        0 12px 28px -12px rgba(0,0,0,0.55);
+      --shadow-hover:
+        0 1px 0 rgba(255,255,255,0.06) inset,
+        0 2px 6px rgba(0,0,0,0.5),
+        0 22px 50px -16px rgba(0,0,0,0.7);
+      --shadow-panel:
+        0 1px 0 rgba(255,255,255,0.05) inset,
+        0 34px 90px -24px rgba(0,0,0,0.75);
+      --ring: 0 0 0 4px rgba(120, 150, 230, 0.22);
+    }
+
+    /* ===== Ambient depth — soft, theme-tinted glow + faint grid =====
+       Active even in plain "theme" mode for a less flat canvas. */
+    body::before {
+      content: "";
+      position: fixed; inset: 0; z-index: -3; pointer-events: none;
+      background:
+        radial-gradient(60vw 60vw at 18% 12%,
+          rgba(var(--accent-tint), 0.10), transparent 60%),
+        radial-gradient(55vw 55vw at 88% 92%,
+          rgba(var(--accent-tint), 0.08), transparent 60%);
+    }
+    :root.theme-dark body::before,
+    body.theme-dark::before {
+      background:
+        radial-gradient(60vw 60vw at 18% 12%,
+          rgba(140, 160, 240, 0.10), transparent 60%),
+        radial-gradient(55vw 55vw at 88% 92%,
+          rgba(120, 100, 200, 0.10), transparent 60%);
+    }
+    body::after {
+      content: "";
+      position: fixed; inset: 0; z-index: -3; pointer-events: none;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(to right, rgba(0,0,0,0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0,0,0,0.025) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 40%, transparent 95%);
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 40%, transparent 95%);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not(.theme-light) body::after {
+        background-image:
+          linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+        opacity: 0.6;
+      }
+    }
+    :root.theme-dark body::after {
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+      opacity: 0.6;
+    }
+    /* Don't double up ambient layers on custom backgrounds. */
+    body.custom-bg::before, body.custom-bg::after { display: none; }
+
+    /* ===== Greeting / clock / date typography ===== */
+    #greeting {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      opacity: 0.85;
+    }
+
+    #clock {
+      font-weight: 200;
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+      background: linear-gradient(180deg,
+        var(--fg) 0%,
+        color-mix(in srgb, var(--fg) 78%, transparent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.04);
+    }
+    #clock .ampm {
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      -webkit-text-fill-color: var(--muted);
+    }
+
+    #date {
+      margin-top: 1.1rem;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      display: inline-flex; align-items: center; gap: 0.65rem;
+    }
+    #date::before, #date::after {
+      content: "";
+      display: inline-block;
+      width: 28px; height: 1px;
+      background: currentColor;
+      opacity: 0.35;
+    }
+
+    /* ===== Search ===== */
+    #search-wrap { margin-top: 3.5rem; }
+    #search-wrap::before {
+      content: "";
+      position: absolute;
+      left: 1.15rem; top: 50%;
+      width: 18px; height: 18px;
+      transform: translateY(-50%);
+      background: currentColor;
+      color: var(--muted);
+      -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><path d='m20 20-3.5-3.5'/></svg>") center/contain no-repeat;
+              mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><path d='m20 20-3.5-3.5'/></svg>") center/contain no-repeat;
+      pointer-events: none;
+      opacity: 0.9;
+      z-index: 2;
+    }
+    #search-wrap::after {
+      content: "/";
+      position: absolute;
+      right: 0.9rem; top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      padding: 0.18rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--field-bg) 60%, transparent);
+      pointer-events: none;
+      opacity: 0.85;
+      transition: opacity 0.2s ease;
+    }
+    #search-wrap:focus-within::after { opacity: 0; }
+
+    #search {
+      padding: 1.05rem 3rem 1.05rem 2.8rem;
+      border-radius: 16px;
+      font-size: 1rem;
+      letter-spacing: 0.005em;
+      transition: border-color 0.2s ease, box-shadow 0.25s ease,
+                  transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    #search:hover { border-color: var(--border-strong); }
+    #search:focus {
+      border-color: color-mix(in srgb, var(--fg) 35%, var(--border-strong));
+      box-shadow: var(--shadow-hover), var(--ring);
+      transform: translateY(-1px);
+    }
+
+    #suggestions { border-radius: 16px; padding: 0.4rem; }
+    .sug { padding: 0.6rem 0.95rem; border-radius: 10px; }
+
+    /* ===== Quick links — taller tiles, subtle inner highlight, accent on hover ===== */
+    #links { gap: 1.2rem; margin-top: 3rem; }
+
+    .link { gap: 0.65rem; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.02em; }
+    .link .icon {
+      width: 60px; height: 60px;
+      border-radius: 18px;
+      font-size: 1.25rem; font-weight: 700;
+      letter-spacing: 0.01em;
+      background:
+        linear-gradient(180deg,
+          color-mix(in srgb, var(--field-bg) 100%, transparent) 0%,
+          color-mix(in srgb, var(--field-bg) 92%, #000 4%) 100%);
+      position: relative;
+      transition:
+        border-color 0.2s ease,
+        background 0.25s ease,
+        box-shadow 0.3s ease,
+        transform 0.3s cubic-bezier(0.34, 1.4, 0.5, 1);
+    }
+    .link .icon::after {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,0.5), transparent 40%);
+      mix-blend-mode: overlay;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not(.theme-light) .link .icon::after { opacity: 0.15; }
+    }
+    :root.theme-dark .link .icon::after { opacity: 0.15; }
+
+    .link:hover .icon, .link:focus-visible .icon {
+      transform: translateY(-3px) scale(1.04);
+      border-color: color-mix(in srgb, var(--fg) 25%, var(--border-strong));
+    }
+    .link:hover { color: var(--fg); transform: none; }
+    .link:focus-visible .icon { box-shadow: var(--shadow-hover), var(--ring); }
+
+    /* ===== Weather chip ===== */
+    #weather {
+      padding: 0.55rem 0.9rem 0.55rem 0.7rem;
+      border-radius: 14px;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+    }
+    #weather .w-emoji { font-size: 1.35rem; }
+    #weather .w-cond {
+      padding-left: 0.55rem;
+      border-left: 1px solid var(--border);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: capitalize;
+    }
+
+    /* ===== Top-right cluster (settings) & bottom-right (notes) ===== */
+    #settings-btn, #notes-btn {
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      font-size: 1.1rem;
+    }
+    #settings-btn:hover { transform: rotate(45deg); }
+
+    /* ===== Settings panel ===== */
+    #panel { border-radius: 22px; padding: 2rem; }
+    #panel h2 { font-size: 1.35rem; letter-spacing: -0.01em; }
+    .field select, .field input[type="text"] { border-radius: 10px; padding: 0.55rem 0.8rem; }
+    .btn { border-radius: 10px; padding: 0.6rem 1.05rem; }
+    .btn:active { transform: translateY(1px); }
+
+    /* ===== Subtle scrollbar polish ===== */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: color-mix(in srgb, var(--fg) 30%, var(--border-strong));
+      background-clip: padding-box;
+      border: 2px solid transparent;
+    }
+
+    /* ===== Slightly slower, more confident entrance ===== */
+    .reveal { animation-duration: 0.9s; }
+    #greeting  { animation-delay: 0.00s; }
+    #clock     { animation-delay: 0.10s; }
+    #date      { animation-delay: 0.22s; }
+    #search-wrap { animation-delay: 0.34s; }
+    #links     { animation-delay: 0.46s; }
+
   </style>
 </head>
 <body>
