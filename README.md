@@ -1,4 +1,4 @@
-# Helium — Homepage for the Helium Browser
+# Element 2 — Homepage for the Helium Browser
 
 A clean, fast, fully offline new tab page built for the [Helium browser](https://helium.computer) — a privacy-first, Chromium-based browser with no ads, no telemetry, and no Google bloat. Helium ships with a blank new tab page by default, so this fills it. It's a single `index.html` file with zero external dependencies — no npm, no frameworks, no build step.
 
