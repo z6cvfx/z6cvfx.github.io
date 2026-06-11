@@ -1,127 +1,85 @@
-# Element 2 — Homepage for the Helium Browser
+# Element2
 
-A clean, fast, fully offline new tab page built for the [Helium browser](https://helium.computer) — a privacy-first, Chromium-based browser with no ads, no telemetry, and no Google bloat. Helium ships with a blank new tab page by default, so this fills it. It's a single `index.html` file with zero external dependencies — no npm, no frameworks, no build step.
+A fast, private, single-file new-tab homepage, built for the [Helium browser](https://helium.computer/) — and any other Chromium-based browser.
 
----
+![Element2](screenshot.png)
+
+Everything lives in one `index.html`: no build step, no frameworks, no trackers, no external fonts. Your settings never leave your browser.
 
 ## Features
 
-- **Live clock & greeting** — 12hr/24hr toggle, personalised greeting with your name, updates every second with tab-throttle catch-up
-- **Weather widget** — powered by [Open-Meteo](https://open-meteo.com/) (no API key required), supports geolocation or manual lat/lon, auto-refreshes every 15 minutes, Celsius or Fahrenheit
-- **Quick links grid** — icon tiles with favicons (Google or DuckDuckGo source, switchable), right-click context menu to edit or remove, drag-to-reorder
-- **Search bar** — supports DuckDuckGo, Google, Bing, Brave, Startpage, Kagi, or a fully custom URL; smart direct-URL detection so typing a URL navigates instead of searching
-- **Notes pad** — floating scratch pad persisted to `localStorage`, toggleable from the toolbar
-- **Themeable backgrounds** — solid colour, gradient (with 8 presets: Sunset, Ocean, Grape, Forest, Night, Candy, Mint, Dusk), animated aurora (floating glow blobs), or a custom image upload
-- **Auto dark/light mode** — follows `prefers-color-scheme`, overridable to force light or dark
-- **Settings panel** — full UI for every option; live background preview before saving; export/import config as JSON for backup or sharing across devices
+- **Clock, date & greeting** — 12/24-hour, optional name, minute-precise without burning CPU in background tabs
+- **Weather chip** — powered by the free, keyless [Open-Meteo](https://open-meteo.com/) API; uses your location (with permission) or manual coordinates, °C/°F, cached for 10 minutes
+- **Search** — DuckDuckGo, Google, Bing, Brave, Startpage, Kagi, or any custom engine (`%s` = query); pastes that look like URLs navigate directly
+- **Search suggestions** — DuckDuckGo autocomplete with full keyboard navigation ([setup below](#search-suggestions))
+- **Quick links** — editable tiles with monogram or real favicons, drag-to-reorder, and a right-click menu (open in new tab, copy address, edit, remove)
+- **Backgrounds** — solid, gradient, animated gradient, floating aurora, or an image (URL or a local file stored in your browser) with darken/blur sliders; text contrast adapts to the background's brightness automatically
+- **Notes pad** — an optional scratchpad in the corner that autosaves as you type
+- **Themes** — auto (follows the system), light, or dark
+- **Settings panel** — live preview, discard protection, JSON export/import for backups and syncing between machines
 
----
+## Getting started
 
-## How it's built
+### Host it on GitHub Pages
 
-### Single-file, zero dependencies
+1. Fork (or clone) this repository.
+2. In the repo: **Settings → Pages → Deploy from a branch**, pick your default branch, save.
+3. Your homepage is live at `https://<username>.github.io/<repo>/` (or `https://<username>.github.io/` if the repo is named `<username>.github.io`).
 
-Everything — fonts, favicon, styles, and logic — lives in one `index.html`. There is no npm, no bundler, no CDN calls at runtime. The page works completely offline from the moment it loads.
+### Set it as your new tab in Helium
 
-- **Fonts** — Inter (UI) and Space Grotesk (clock numerals) are embedded as base64-encoded variable font data URIs inside `@font-face` blocks. Non-latin text falls back to the system font stack automatically.
-- **Favicon** — a "He" monogram tile embedded as a base64 PNG data URI, styled to match the quick-link tiles.
+Open Helium's settings and set the URL above as your new-tab page / homepage. In other Chromium browsers, use any "custom new tab" extension, or set it as the startup/home page.
 
-### Config & persistence
+### Or run it locally
 
-All user settings are serialised to a single JSON object and stored under the key `helium-homepage-config` in `localStorage`. A `mergeConfig()` function deep-merges saved settings with the built-in defaults so new config keys added in future versions never break existing saves.
+Download `index.html` and open it — that's it. Everything (settings, background image, notes) is stored inside the browser, and the page works offline except for the optional network features listed under [Privacy](#privacy--data).
 
-Background images uploaded from disk are too large for `localStorage`'s ~5 MB string quota, so they are stored separately in **IndexedDB**, keeping the main config lean.
+## Search suggestions
 
-Notes text is stored under its own key (`helium-homepage-notes`) so it can be updated on every keystroke without touching the heavier settings object.
+Out of the box the page queries DuckDuckGo's official autocomplete API directly. **DuckDuckGo doesn't allow cross-origin reads** (no CORS headers), so on a hosted copy (GitHub Pages included) the browser blocks the response and the dropdown silently stays closed — the page stops retrying after a few failures.
 
-### Background engine
+To make suggestions work on a hosted copy, deploy the included relay:
 
-Four background modes are supported, all driven by the same `applyBackground()` function:
+1. Create a free worker at [Cloudflare Workers](https://workers.cloudflare.com/) and paste in [`suggestions-worker.js`](suggestions-worker.js).
+2. In the page: **⚙ Settings → Search suggestions → relay URL** → `https://<your-worker>.workers.dev/?q=%s`
+3. Save. Done.
 
-| Mode | Implementation |
-|------|---------------|
-| `theme` | Uses CSS custom properties from the active light/dark theme |
-| `solid` | Sets a CSS hex colour directly on `<body>` |
-| `gradient` | Animating CSS gradient with two colour stops and 8 named presets |
-| `aurora` | Three absolutely-positioned radial-gradient blobs animated with `float` keyframes |
-| `image` | Uploaded image written to IndexedDB, rendered as a `<div>` layer with optional dim and blur sliders; a SVG film-grain + vignette overlay is added for depth |
+The worker asks DuckDuckGo first and transparently falls back to Brave, then Bing, if DDG refuses or rate-limits its datacenter IP (a 200-with-empty-`[]` soft block you may encounter). Results are cached at the edge for 5 minutes. Open `https://<your-worker>.workers.dev/?q=helium&debug` to see what every provider returns from the worker's own IP. Remove entries from the `PROVIDERS` array in the worker if you'd rather not fall back.
 
-When a custom background is active, the page auto-detects its brightness using canvas pixel sampling and switches UI elements to a frosted-glass treatment accordingly.
+## Keyboard shortcuts
 
-### Weather
+| Keys | Action |
+| --- | --- |
+| any letter, or `/` | focus the search box from anywhere |
+| `Enter` | search (or navigate, if you typed a URL) |
+| `Alt+Enter` | search in a new tab |
+| `↓` / `↑` | move through suggestions |
+| `Esc` | close suggestions → clear focus; also closes menus and settings |
+| `↑` / `↓` on a link row's ⠿ handle | reorder quick links in settings |
 
-Weather data comes from the Open-Meteo free API — no API key needed. WMO weather interpretation codes are mapped to emoji + description strings locally. Responses are cached in `localStorage` and only re-fetched after 15 minutes (or when settings change), so the widget works on slow connections without hammering the API.
+## Privacy & data
 
-### Clock
+Everything is stored locally: settings in `localStorage`, a chosen background image in IndexedDB, notes under their own key (so they survive a settings reset). Export/import moves settings between browsers as a JSON file.
 
-The clock schedules itself to fire on exact second boundaries (not every 1000 ms from an arbitrary start), and listens to the `visibilitychange` event to catch up after a tab has been throttled by the browser.
+The page makes **no network requests at all**, except the features below — each with its own off-switch in ⚙ Settings:
 
-### Settings panel
+| Feature | Talks to | When | Default |
+| --- | --- | --- | --- |
+| Weather | `api.open-meteo.com` | on load, cached 10 min | on |
+| Search suggestions | `duckduckgo.com` or your relay | while typing in the search box | on |
+| Site icons | DuckDuckGo or Google favicon API | when rendering quick links | off |
+| Geolocation | browser permission prompt | only if "Use my location" is on | on, falls back to manual coordinates |
 
-The settings panel is built entirely with native HTML form elements — no UI library. It supports live preview of background changes before committing, and a Cancel/Escape path that reverts any unsaved state (including background image picks) back to the last saved config via a `panelSnapshot` string diff.
+Fonts (Inter, Space Grotesk) and the favicon are embedded in the file — nothing is fetched from Google Fonts or any CDN.
 
----
+## Customizing the defaults
 
-## Using this homepage
+All defaults live in the `DEFAULT_CONFIG` object near the top of the `<script>` in `index.html` — quick links, search engine, theme, weather coordinates, and so on. The **Reset** button restores whatever is defined there, so edits to it become your personal factory settings.
 
-### Option 1 — Use the hosted version (no download needed)
+## Files
 
-The homepage is already live at:
-
-```
-https://z6cvfx.github.io
-```
-
-Anyone can point their Helium browser at this URL and use it instantly — no download, no setup, no file to manage. Your settings and quick links are saved in your own browser's `localStorage`, so they stay private to you.
-
-To set it as your Helium new tab page:
-
-1. Go to `helium://flags/#custom-ntp`
-2. Enable the **custom new tab page** flag and set the value to `https://z6cvfx.github.io`
-3. Go to `helium://settings/onStartup` and select **"Open the new tab page"**
-4. Open a new tab — done
-
-### Option 2 — Download and host it yourself
-
-If you'd rather self-host or customise the code:
-
-1. Download `index.html` from this repo
-2. Either open it directly as a local file (`file:///path/to/index.html`) or push it to your own GitHub Pages repo
-3. Point Helium's custom NTP flag at your local path or hosted URL using the same steps above
-
----
-
-## Configuration
-
-Open the settings panel (⚙ button, top right) to configure:
-
-- Clock format (12hr / 24hr) and greeting name
-- Search engine (DuckDuckGo, Google, Bing, Brave, Startpage, Kagi, or custom URL)
-- Quick links — add, edit, reorder, remove
-- Weather — enable/disable, unit, geolocation or manual coordinates
-- Background — theme / solid / gradient / aurora / image
-- Theme override — auto / light / dark
-- Notes pad — enable/disable
-- Open links in new tab
-- Favicon source
-
-**Export / Import** — use the export button to save your config as a `.json` file and import it on another device to restore your setup exactly.
-
----
-
-## Tech stack
-
-| Layer | Choice |
-|-------|--------|
-| Markup | Semantic HTML5 |
-| Styles | Vanilla CSS with custom properties (design tokens) |
-| Logic | Vanilla JS (ES2020+), no frameworks |
-| Persistence | `localStorage` + IndexedDB |
-| Weather API | [Open-Meteo](https://open-meteo.com/) (free, no key) |
-| Fonts | Inter + Space Grotesk (self-hosted, base64 embedded) |
-
----
-
-## License
-
-MIT
+| File | Purpose |
+| --- | --- |
+| `index.html` | the entire homepage — self-contained |
+| `suggestions-worker.js` | optional Cloudflare Worker relay for search suggestions |
+| `screenshot.png` | the image above |
