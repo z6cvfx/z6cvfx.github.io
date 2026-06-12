@@ -987,6 +987,200 @@
       .link:hover .icon, .link:focus-visible .icon { background: var(--hover); }
       #panel::before, .link .icon::after { display: none; }
     }
+
+    /* ======================================================================
+       v3 polish layer — small, additive details that lift the page from
+       "clean" to "considered". No layout or JS dependencies; everything
+       here piggybacks on existing tokens and elements.
+       ====================================================================== */
+
+    /* Text selection picks up the accent tint instead of the browser default */
+    ::selection {
+      background: rgba(var(--accent-tint), 0.32);
+      color: var(--fg);
+    }
+
+    /* Caret matches the foreground (subtle but felt in the search field) */
+    #search { caret-color: var(--fg); }
+
+    /* A single, system-wide focus ring for keyboard users — calmer than the
+       browser default and consistent across every interactive surface. */
+    :focus-visible { outline: none; }
+    a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+      box-shadow: var(--ring);
+      border-radius: 12px;
+    }
+
+    /* ---- Greeting · clock · date refinements ---- */
+    /* A tiny "live" dot next to the greeting — quiet, brand-y, breathes once
+       every few seconds so the page never feels frozen on idle tabs. */
+    #greeting::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: 0.6rem;
+      border-radius: 999px;
+      background: rgb(var(--accent-tint));
+      box-shadow: 0 0 0 0 rgba(var(--accent-tint), 0.55);
+      vertical-align: middle;
+      animation: liveDot 3.6s ease-out infinite;
+    }
+    @keyframes liveDot {
+      0%   { box-shadow: 0 0 0 0   rgba(var(--accent-tint), 0.55); }
+      70%  { box-shadow: 0 0 0 8px rgba(var(--accent-tint), 0); }
+      100% { box-shadow: 0 0 0 0   rgba(var(--accent-tint), 0); }
+    }
+
+    /* Soft halo behind the big clock — only visible on plain backgrounds,
+       so custom photo backgrounds aren't muddied. */
+    body:not(.custom-bg) #clock {
+      filter: drop-shadow(0 18px 40px rgba(var(--accent-tint), 0.12));
+    }
+
+    /* AM/PM gets its own pill-ish chip so it reads as metadata, not text */
+    #clock .ampm {
+      padding: 0.15em 0.5em;
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+    }
+
+    /* Tapered date dividers — fade out toward the ends instead of hard lines */
+    #date::before, #date::after {
+      width: 36px;
+      background: linear-gradient(90deg, transparent, currentColor, transparent);
+      opacity: 0.55;
+    }
+
+    /* ---- Weather chip ---- */
+    /* Tiny accent dot before the temperature reads as a "status light" */
+    #weather::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgb(var(--accent-tint));
+      box-shadow: 0 0 8px rgba(var(--accent-tint), 0.6);
+      margin-right: 0.1rem;
+      flex: 0 0 auto;
+    }
+
+    /* ---- Quick links ---- */
+    /* Conic specular ring on hover — a thin moving rim of light that fakes
+       a soft reflection on the glass edge. */
+    .link .icon::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: conic-gradient(from 140deg,
+        transparent 0deg,
+        rgba(var(--accent-tint), 0.55) 60deg,
+        transparent 140deg,
+        transparent 360deg);
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+              mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .link:hover .icon::before, .link:focus-visible .icon::before { opacity: 1; }
+
+    /* Underline cue on the label — keeps the focus on the icon but adds a
+       satisfying "click target" affordance on hover. */
+    .link span:not(.icon) {
+      position: relative;
+      padding-bottom: 2px;
+    }
+    .link span:not(.icon)::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 0;
+      height: 1px;
+      background: currentColor;
+      opacity: 0.6;
+      transform: translateX(-50%);
+      transition: width 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .link:hover span:not(.icon)::after,
+    .link:focus-visible span:not(.icon)::after { width: 70%; }
+
+    /* ---- Settings + notes buttons ---- */
+    /* Both fixed-corner buttons gain the same hover lift so they feel like
+       siblings. The gear keeps its rotation; notes gets a tiny scale. */
+    #notes-btn {
+      transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease,
+                  transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  box-shadow 0.25s ease;
+    }
+    #notes-btn:hover {
+      transform: translateY(-1px) scale(1.04);
+      box-shadow: var(--glass-shadow-sm), 0 8px 22px -10px rgba(var(--accent-tint), 0.35);
+    }
+    #settings-btn:hover {
+      box-shadow: var(--glass-shadow-sm), 0 8px 22px -10px rgba(var(--accent-tint), 0.35);
+    }
+
+    /* ---- Search field ---- */
+    /* A whisper of an accent glow when the field is focused — the existing
+       ring stays, this just colors the air around the input. */
+    #search-wrap:focus-within {
+      filter: drop-shadow(0 8px 18px rgba(var(--accent-tint), 0.08));
+    }
+
+    /* The "/" hint becomes a proper kbd-style chip */
+    #search-wrap::after {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: 0 1px 0 var(--bevel) inset, 0 1px 0 rgba(0,0,0,0.04);
+    }
+
+    /* ---- Suggestions polish ---- */
+    .sug {
+      transition: background 0.12s ease, transform 0.12s ease;
+    }
+    .sug.sel { transform: translateX(2px); }
+
+    /* ---- Scrollbar (panel content) ---- */
+    /* Slimmer, theme-aware track so the settings panel doesn't dump a chunky
+       OS scrollbar on top of the frosted surface. */
+    #panel, #overlay {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
+    }
+    #panel::-webkit-scrollbar, #overlay::-webkit-scrollbar { width: 10px; }
+    #panel::-webkit-scrollbar-thumb, #overlay::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--fg) 18%, transparent);
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      border-radius: 999px;
+    }
+    #panel::-webkit-scrollbar-thumb:hover, #overlay::-webkit-scrollbar-thumb:hover {
+      background: color-mix(in srgb, var(--fg) 32%, transparent);
+      background-clip: padding-box;
+    }
+
+    /* ---- Reduced-motion / reduced-transparency carry-overs ---- */
+    @media (prefers-reduced-motion: reduce) {
+      #greeting::before { animation: none; }
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      #clock .ampm, #search-wrap::after { backdrop-filter: none; background: var(--field-bg); }
+      .link .icon::before { display: none; }
+    }
   </style>
 </head>
 <body>
