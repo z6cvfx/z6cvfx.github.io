@@ -192,6 +192,7 @@
       #welcome-card, .w-step.on, #w-bg-name.tick { animation: none !important; }
       #aurora .blob { animation: none !important; }
       body { animation: none !important; }
+      #greeting::before { animation: none; }
     }
 
     /* ====== Animated / aurora background machinery ====== */
@@ -295,6 +296,24 @@
       margin-bottom: 1rem;
       min-height: 1.2em;
     }
+    /* tiny "live" dot beside the greeting — breathes every few seconds */
+    #greeting::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: 0.6rem;
+      border-radius: 999px;
+      background: rgb(var(--accent-tint));
+      box-shadow: 0 0 0 0 rgba(var(--accent-tint), 0.55);
+      vertical-align: middle;
+      animation: liveDot 3.6s ease-out infinite;
+    }
+    @keyframes liveDot {
+      0%   { box-shadow: 0 0 0 0   rgba(var(--accent-tint), 0.55); }
+      70%  { box-shadow: 0 0 0 8px rgba(var(--accent-tint), 0); }
+      100% { box-shadow: 0 0 0 0   rgba(var(--accent-tint), 0); }
+    }
 
     #clock {
       font-family: var(--font-display);
@@ -309,6 +328,12 @@
       background-clip: text;
       color: transparent;
     }
+    /* soft halo behind the clock — plain backgrounds only, so photos and
+       gradients aren't muddied */
+    body:not(.custom-bg) #clock {
+      filter: drop-shadow(0 18px 40px rgba(var(--accent-tint), 0.12));
+    }
+    /* AM/PM as a small glass chip so it reads as metadata, not text */
     #clock .ampm {
       font-size: 0.26em;
       font-weight: 500;
@@ -317,6 +342,12 @@
       letter-spacing: 0.18em;
       margin-left: 0.3em;
       vertical-align: baseline;
+      padding: 0.15em 0.5em;
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
     }
 
     #date {
@@ -331,10 +362,10 @@
     }
     #date::before, #date::after {
       content: "";
-      width: 28px;
+      width: 36px;
       height: 1px;
-      background: currentColor;
-      opacity: 0.35;
+      background: linear-gradient(90deg, transparent, currentColor, transparent);
+      opacity: 0.55;
     }
 
     /* ====== Weather chip (top-left) ====== */
@@ -363,6 +394,17 @@
       border-color: color-mix(in srgb, var(--fg) 22%, var(--glass-border));
     }
     #weather.show { display: flex; }
+    /* accent "status light" before the temperature */
+    #weather::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgb(var(--accent-tint));
+      box-shadow: 0 0 8px rgba(var(--accent-tint), 0.6);
+      margin-right: 0.1rem;
+      flex: 0 0 auto;
+    }
     #weather .w-emoji { font-size: 1.35rem; line-height: 1; }
     #weather .w-cond {
       color: var(--muted);
@@ -413,7 +455,10 @@
       padding: 0.18rem 0.5rem;
       border: 1px solid var(--glass-border);
       border-radius: 6px;
-      background: transparent;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: 0 1px 0 var(--bevel) inset, 0 1px 0 rgba(0,0,0,0.04);
       pointer-events: none;
       opacity: 0.85;
       transition: opacity 0.2s ease;
@@ -434,6 +479,7 @@
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
       box-shadow: var(--glass-shadow);
+      caret-color: var(--fg);
       transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
     }
     #search::placeholder { color: var(--muted); }
@@ -441,7 +487,10 @@
     #search:focus {
       background: color-mix(in srgb, var(--field-bg) 80%, transparent);
       border-color: color-mix(in srgb, var(--fg) 22%, var(--glass-border));
-      box-shadow: var(--shadow-hover), var(--ring);
+      /* the trailing accent glow colours the air around the focused field —
+         kept as a box-shadow; a filter on the wrap would break the frosted
+         glass of the input and the open suggestions dropdown */
+      box-shadow: var(--shadow-hover), var(--ring), 0 8px 18px rgba(var(--accent-tint), 0.08);
       transform: translateY(-1px);
     }
 
@@ -474,9 +523,11 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      transition: background 0.12s ease, transform 0.12s ease;
     }
     .sug .typed { color: var(--muted); }
     .sug:hover, .sug.sel { background: var(--hover); }
+    .sug.sel { transform: translateX(2px); }
     body.custom-bg #suggestions {
       background: var(--glass-strong);
       border-color: var(--glass-border);
@@ -507,6 +558,25 @@
       transition: color 0.18s ease;
     }
     .link:hover, .link:focus-visible { color: var(--fg); outline: none; }
+    /* underline cue on the label */
+    .link .label {
+      position: relative;
+      padding-bottom: 2px;
+    }
+    .link .label::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 0;
+      height: 1px;
+      background: currentColor;
+      opacity: 0.6;
+      transform: translateX(-50%);
+      transition: width 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .link:hover .label::after,
+    .link:focus-visible .label::after { width: 70%; }
 
     .link .icon {
       width: 60px;
@@ -531,6 +601,32 @@
       box-shadow: var(--glass-shadow-sm);
       transition: border-color 0.2s ease, background 0.25s ease, box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.4, 0.5, 1);
     }
+    /* conic specular rim on hover — a thin arc of light on the glass edge
+       (inset 0, not -1px: the icon's overflow:hidden would clip it away) */
+    .link .icon::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: conic-gradient(from 140deg,
+        transparent 0deg,
+        rgba(var(--accent-tint), 0.55) 60deg,
+        transparent 140deg,
+        transparent 360deg);
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+              mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .link:hover .icon::before, .link:focus-visible .icon::before { opacity: 1; }
     /* glossy sheen over the tile face (incl. favicons) */
     .link .icon::after {
       content: "";
@@ -573,13 +669,14 @@
       align-items: center;
       justify-content: center;
       box-shadow: var(--glass-shadow-sm);
-      transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+      transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s ease;
     }
     #settings-btn:hover {
       color: var(--fg);
       background: var(--glass-bg-strong);
       border-color: color-mix(in srgb, var(--fg) 22%, var(--glass-border));
       transform: rotate(45deg);
+      box-shadow: var(--glass-shadow-sm), 0 8px 22px -10px rgba(var(--accent-tint), 0.35);
     }
 
     /* ====== Settings overlay & panel ====== */
@@ -744,6 +841,10 @@
         color-mix(in srgb, var(--fg) 98%, transparent),
         color-mix(in srgb, var(--fg) 84%, transparent));
     }
+    /* primary's own box-shadow outranks the shared focus ring — re-add it */
+    .btn.primary:focus-visible {
+      box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 16px -8px rgba(17,17,17,0.45), var(--ring);
+    }
     #add-link { margin-top: 0.4rem; }
 
     .panel-actions {
@@ -803,12 +904,14 @@
       align-items: center;
       justify-content: center;
       box-shadow: var(--glass-shadow-sm);
-      transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+      transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s ease;
     }
     #notes-btn:hover {
       color: var(--fg);
       background: var(--glass-bg-strong);
       border-color: color-mix(in srgb, var(--fg) 22%, var(--glass-border));
+      transform: translateY(-1px) scale(1.04);
+      box-shadow: var(--glass-shadow-sm), 0 8px 22px -10px rgba(var(--accent-tint), 0.35);
     }
     #notes-card {
       /* own theme-coloured surface — same token re-point as #panel above */
@@ -926,6 +1029,9 @@
     }
     .w-opt small { display: block; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
     .w-opt.sel small { color: color-mix(in srgb, var(--field-bg) 75%, transparent); }
+    .w-opt.sel:focus-visible {
+      box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 16px -8px rgba(17,17,17,0.45), var(--ring);
+    }
     .w-cycler { display: flex; align-items: center; justify-content: center; gap: 0.9rem; margin: 1.1rem 0 0.7rem; }
     .w-arrow {
       width: 38px;
@@ -962,6 +1068,17 @@
     .w-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); transition: background 0.2s ease, transform 0.2s ease; }
     .w-dots i.on { background: var(--accent); transform: scale(1.3); }
 
+    /* ====== Selection & keyboard focus ====== */
+    ::selection {
+      background: rgba(var(--accent-tint), 0.32);
+      color: var(--fg);
+    }
+    /* One calm, consistent ring for keyboard users. Fields keep their own
+       focus styles; .link draws its ring on the icon instead. The ring is a
+       box-shadow so it follows each element's own border-radius. */
+    :focus-visible { outline: none; }
+    a:focus-visible:not(.link), button:focus-visible, [tabindex]:focus-visible { box-shadow: var(--ring); }
+
     /* ====== Scrollbar polish ====== */
     ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-thumb {
@@ -971,10 +1088,17 @@
       background-clip: padding-box;
     }
     ::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--fg) 30%, var(--border-strong)); }
+    /* thin, theme-aware bars on the frosted surfaces — the standard
+       scrollbar-* properties take precedence over ::-webkit-scrollbar */
+    #panel, #overlay {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
+    }
 
     /* ====== Reduced transparency — swap frosted surfaces for solid ones ====== */
     @media (prefers-reduced-transparency: reduce) {
       #search, #search:focus, #suggestions, #weather, #settings-btn, #notes-btn,
+      #clock .ampm, #search-wrap::after,
       #ctx-menu, #notes-card, #welcome-card, #panel, .btn, .link .icon,
       .w-opt, .w-arrow, .link-row input, #notes-text, #notes-text:focus,
       .field select, .field input[type="text"],
@@ -985,201 +1109,7 @@
       .btn:hover, .w-opt:not(.sel):hover, .w-arrow:hover,
       #settings-btn:hover, #notes-btn:hover, #weather:hover,
       .link:hover .icon, .link:focus-visible .icon { background: var(--hover); }
-      #panel::before, .link .icon::after { display: none; }
-    }
-
-    /* ======================================================================
-       v3 polish layer — small, additive details that lift the page from
-       "clean" to "considered". No layout or JS dependencies; everything
-       here piggybacks on existing tokens and elements.
-       ====================================================================== */
-
-    /* Text selection picks up the accent tint instead of the browser default */
-    ::selection {
-      background: rgba(var(--accent-tint), 0.32);
-      color: var(--fg);
-    }
-
-    /* Caret matches the foreground (subtle but felt in the search field) */
-    #search { caret-color: var(--fg); }
-
-    /* A single, system-wide focus ring for keyboard users — calmer than the
-       browser default and consistent across every interactive surface. */
-    :focus-visible { outline: none; }
-    a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
-      box-shadow: var(--ring);
-      border-radius: 12px;
-    }
-
-    /* ---- Greeting · clock · date refinements ---- */
-    /* A tiny "live" dot next to the greeting — quiet, brand-y, breathes once
-       every few seconds so the page never feels frozen on idle tabs. */
-    #greeting::before {
-      content: "";
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      margin-right: 0.6rem;
-      border-radius: 999px;
-      background: rgb(var(--accent-tint));
-      box-shadow: 0 0 0 0 rgba(var(--accent-tint), 0.55);
-      vertical-align: middle;
-      animation: liveDot 3.6s ease-out infinite;
-    }
-    @keyframes liveDot {
-      0%   { box-shadow: 0 0 0 0   rgba(var(--accent-tint), 0.55); }
-      70%  { box-shadow: 0 0 0 8px rgba(var(--accent-tint), 0); }
-      100% { box-shadow: 0 0 0 0   rgba(var(--accent-tint), 0); }
-    }
-
-    /* Soft halo behind the big clock — only visible on plain backgrounds,
-       so custom photo backgrounds aren't muddied. */
-    body:not(.custom-bg) #clock {
-      filter: drop-shadow(0 18px 40px rgba(var(--accent-tint), 0.12));
-    }
-
-    /* AM/PM gets its own pill-ish chip so it reads as metadata, not text */
-    #clock .ampm {
-      padding: 0.15em 0.5em;
-      border: 1px solid var(--glass-border);
-      border-radius: 999px;
-      background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-    }
-
-    /* Tapered date dividers — fade out toward the ends instead of hard lines */
-    #date::before, #date::after {
-      width: 36px;
-      background: linear-gradient(90deg, transparent, currentColor, transparent);
-      opacity: 0.55;
-    }
-
-    /* ---- Weather chip ---- */
-    /* Tiny accent dot before the temperature reads as a "status light" */
-    #weather::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: rgb(var(--accent-tint));
-      box-shadow: 0 0 8px rgba(var(--accent-tint), 0.6);
-      margin-right: 0.1rem;
-      flex: 0 0 auto;
-    }
-
-    /* ---- Quick links ---- */
-    /* Conic specular ring on hover — a thin moving rim of light that fakes
-       a soft reflection on the glass edge. */
-    .link .icon::before {
-      content: "";
-      position: absolute;
-      inset: -1px;
-      border-radius: inherit;
-      padding: 1px;
-      background: conic-gradient(from 140deg,
-        transparent 0deg,
-        rgba(var(--accent-tint), 0.55) 60deg,
-        transparent 140deg,
-        transparent 360deg);
-      -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-              mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-              mask-composite: exclude;
-      opacity: 0;
-      transition: opacity 0.35s ease;
-      pointer-events: none;
-    }
-    .link:hover .icon::before, .link:focus-visible .icon::before { opacity: 1; }
-
-    /* Underline cue on the label — keeps the focus on the icon but adds a
-       satisfying "click target" affordance on hover. */
-    .link span:not(.icon) {
-      position: relative;
-      padding-bottom: 2px;
-    }
-    .link span:not(.icon)::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: 0;
-      width: 0;
-      height: 1px;
-      background: currentColor;
-      opacity: 0.6;
-      transform: translateX(-50%);
-      transition: width 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
-    }
-    .link:hover span:not(.icon)::after,
-    .link:focus-visible span:not(.icon)::after { width: 70%; }
-
-    /* ---- Settings + notes buttons ---- */
-    /* Both fixed-corner buttons gain the same hover lift so they feel like
-       siblings. The gear keeps its rotation; notes gets a tiny scale. */
-    #notes-btn {
-      transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease,
-                  transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  box-shadow 0.25s ease;
-    }
-    #notes-btn:hover {
-      transform: translateY(-1px) scale(1.04);
-      box-shadow: var(--glass-shadow-sm), 0 8px 22px -10px rgba(var(--accent-tint), 0.35);
-    }
-    #settings-btn:hover {
-      box-shadow: var(--glass-shadow-sm), 0 8px 22px -10px rgba(var(--accent-tint), 0.35);
-    }
-
-    /* ---- Search field ---- */
-    /* A whisper of an accent glow when the field is focused — the existing
-       ring stays, this just colors the air around the input. */
-    #search-wrap:focus-within {
-      filter: drop-shadow(0 8px 18px rgba(var(--accent-tint), 0.08));
-    }
-
-    /* The "/" hint becomes a proper kbd-style chip */
-    #search-wrap::after {
-      background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      box-shadow: 0 1px 0 var(--bevel) inset, 0 1px 0 rgba(0,0,0,0.04);
-    }
-
-    /* ---- Suggestions polish ---- */
-    .sug {
-      transition: background 0.12s ease, transform 0.12s ease;
-    }
-    .sug.sel { transform: translateX(2px); }
-
-    /* ---- Scrollbar (panel content) ---- */
-    /* Slimmer, theme-aware track so the settings panel doesn't dump a chunky
-       OS scrollbar on top of the frosted surface. */
-    #panel, #overlay {
-      scrollbar-width: thin;
-      scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
-    }
-    #panel::-webkit-scrollbar, #overlay::-webkit-scrollbar { width: 10px; }
-    #panel::-webkit-scrollbar-thumb, #overlay::-webkit-scrollbar-thumb {
-      background: color-mix(in srgb, var(--fg) 18%, transparent);
-      border: 2px solid transparent;
-      background-clip: padding-box;
-      border-radius: 999px;
-    }
-    #panel::-webkit-scrollbar-thumb:hover, #overlay::-webkit-scrollbar-thumb:hover {
-      background: color-mix(in srgb, var(--fg) 32%, transparent);
-      background-clip: padding-box;
-    }
-
-    /* ---- Reduced-motion / reduced-transparency carry-overs ---- */
-    @media (prefers-reduced-motion: reduce) {
-      #greeting::before { animation: none; }
-    }
-    @media (prefers-reduced-transparency: reduce) {
-      #clock .ampm, #search-wrap::after { backdrop-filter: none; background: var(--field-bg); }
-      .link .icon::before { display: none; }
+      #panel::before, .link .icon::after, .link .icon::before { display: none; }
     }
   </style>
 </head>
@@ -1986,6 +1916,106 @@
     }
   }
 
+  // Crossfade between the two contrast palettes above. Driven from JS rather
+  // than a CSS transition: the clock's gradient text can't transition a
+  // background-image, and Chromium's registered-custom-property transitions
+  // proved unreliable on repeated flips — interpolating the tokens each frame
+  // works everywhere and keeps every consumer (gradient included) in step.
+  const CONTRAST_DARK_BG = {   // light text over a dark backdrop
+    "--fg": [244, 244, 245, 1],
+    "--muted": [255, 255, 255, 0.7],
+    "--glass-bg": [255, 255, 255, 0.10],
+    "--glass-border": [255, 255, 255, 0.22],
+    "--glass-strong": [18, 20, 26, 0.68],
+  };
+  const CONTRAST_LIGHT_BG = {  // dark text over a light backdrop
+    "--fg": [22, 24, 29, 1],
+    "--muted": [0, 0, 0, 0.55],
+    "--glass-bg": [255, 255, 255, 0.45],
+    "--glass-border": [255, 255, 255, 0.65],
+    "--glass-strong": [255, 255, 255, 0.78],
+  };
+  // Timer-driven (not requestAnimationFrame): rAF stalls in background tabs
+  // and never fires at all in some headless contexts, which would strand the
+  // fade mid-way; a timed interval self-completes everywhere.
+  let fadeTimer = null, fadeState = null; // channel values mid-fade (retarget point)
+  function cancelContrastFade() {
+    if (fadeTimer) clearInterval(fadeTimer);
+    fadeTimer = null; fadeState = null;
+  }
+  function fadeContrast(darkBg, ms) {
+    const to = darkBg ? CONTRAST_DARK_BG : CONTRAST_LIGHT_BG;
+    const fromPalette = darkBg ? CONTRAST_LIGHT_BG : CONTRAST_DARK_BG;
+    const from = {};
+    for (const k in to) from[k] = (fadeState && fadeState[k]) || fromPalette[k];
+    cancelContrastFade();
+    const root = document.documentElement, t0 = performance.now();
+    fadeTimer = setInterval(() => {
+      const p = Math.min((performance.now() - t0) / ms, 1);
+      const e = p * (2 - p); // ease-out
+      const cur = {};
+      for (const k in to) {
+        const c = from[k].map((v, i) => v + (to[k][i] - v) * e);
+        cur[k] = c;
+        root.style.setProperty(k,
+          `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${+c[3].toFixed(3)})`);
+      }
+      fadeState = cur;
+      if (p >= 1) {
+        cancelContrastFade();
+        applyContrast(darkBg); // land exactly on the canonical palette
+      }
+    }, 16);
+  }
+
+  // A one-shot contrast pick goes stale on the animated gradient — the
+  // colours sweep beneath the text as background-position animates. Sample
+  // the animated position a few times a second, reconstruct the gradient
+  // colour behind the clock, and flip the contrast tokens whenever its
+  // luminance crosses the threshold. The 0.5–0.6 hysteresis band stops it
+  // flickering while the boundary colour sits under the clock.
+  let animTimer = null, animDarkText = null;
+  function stopAnimContrast() {
+    if (animTimer) clearInterval(animTimer);
+    animTimer = null; animDarkText = null;
+    cancelContrastFade(); // a leftover frame must not write tokens applyBackground just reset
+  }
+  function startAnimContrast(c1, c2) {
+    stopAnimContrast();
+    const l1 = brightness(c1), l2 = brightness(c2);
+    const clock = document.getElementById("clock");
+    const tick = () => {
+      if (document.hidden) return;
+      const pos = parseFloat(getComputedStyle(document.body).backgroundPositionX) / 100;
+      if (!isFinite(pos)) return;
+      // background area is 400% x 400% of the viewport; x animated, y at 50%
+      const W = document.documentElement.clientWidth * 4;
+      const H = document.documentElement.clientHeight * 4;
+      const r = clock.getBoundingClientRect();
+      const px = r.left + r.width / 2 + (W - W / 4) * pos;
+      const py = r.top + r.height / 2 + (H - H / 4) * 0.5;
+      // project the point onto the -45deg gradient axis -> t in [0,1]
+      const L = (W + H) * Math.SQRT1_2;
+      let t = 0.5 - ((px - W / 2) + (py - H / 2)) * Math.SQRT1_2 / L;
+      t = Math.min(Math.max(t, 0), 1);
+      // stops are c1,c2,c1,c2 -> luminance zig-zags between l1 and l2
+      const s = t * 3, i = Math.min(Math.floor(s), 2), f = s - i;
+      const lum = i % 2 === 0 ? l1 + (l2 - l1) * f : l2 + (l1 - l2) * f;
+      const first = animDarkText === null;
+      const darkText = first ? lum >= 0.55
+                     : animDarkText ? lum > 0.5 : lum >= 0.6;
+      if (darkText !== animDarkText) {
+        animDarkText = darkText;
+        // first pick lands at page load (or on a background switch): apply it
+        // instantly so the crossfade only smooths real flips
+        if (first) applyContrast(!darkText);
+        else fadeContrast(!darkText, 800);
+      }
+    };
+    animTimer = setInterval(tick, 400);
+    tick();
+  }
+
   let bgToken = 0;        // invalidates in-flight async image loads
   let bgObjectUrl = null; // revocable blob URL for the IndexedDB image
   const bgImageEl = document.getElementById("bg-image");
@@ -2004,6 +2034,7 @@
     ["--fg","--muted","--glass-bg","--glass-border","--glass-strong","--aurora1","--aurora2"]
       .forEach((p) => root.style.removeProperty(p));
     if (bgObjectUrl) { URL.revokeObjectURL(bgObjectUrl); bgObjectUrl = null; }
+    stopAnimContrast();
 
     if (!b.style || b.style === "theme") return;
 
@@ -2031,6 +2062,7 @@
     }
 
     applyContrast(darkBg);
+    if (b.style === "animated") startAnimContrast(c1, c2);
     body.classList.add("custom-bg");
   }
 
