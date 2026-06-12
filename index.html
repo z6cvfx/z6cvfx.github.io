@@ -1978,8 +1978,9 @@
   // colours sweep beneath the text as background-position animates. Sample
   // the animated position a few times a second, reconstruct the gradient
   // colour behind the clock, and flip the contrast tokens whenever its
-  // luminance crosses the threshold. The 0.5–0.6 hysteresis band stops it
-  // flickering while the boundary colour sits under the clock.
+  // luminance crosses the threshold. Dark text stays readable well below
+  // mid-grey, so the band sits low (0.35–0.5): light text only on genuinely
+  // dark ground, and the wide gap keeps mid-tone sweeps from toggling at all.
   let animTimer = null, animDarkText = null;
   function stopAnimContrast() {
     if (animTimer) clearInterval(animTimer);
@@ -2008,8 +2009,8 @@
       const s = t * 3, i = Math.min(Math.floor(s), 2), f = s - i;
       const lum = i % 2 === 0 ? l1 + (l2 - l1) * f : l2 + (l1 - l2) * f;
       const first = animDarkText === null;
-      const darkText = first ? lum >= 0.55
-                     : animDarkText ? lum > 0.5 : lum >= 0.6;
+      const darkText = first ? lum >= 0.42
+                     : animDarkText ? lum > 0.35 : lum >= 0.5;
       if (darkText !== animDarkText) {
         animDarkText = darkText;
         // first pick lands at page load (or on a background switch): apply it
