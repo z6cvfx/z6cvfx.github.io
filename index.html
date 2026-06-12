@@ -33,6 +33,7 @@
 
     /* ----- Theme tokens (light defaults) ----- */
     :root {
+      color-scheme: light dark; /* native widgets (select popups, scrollbars) follow */
       --bg: #f6f5f2;
       --fg: #14161a;
       --muted: #6b7280;
@@ -45,8 +46,8 @@
       --field-bg: #ffffff;
       --border: #e6e4df;
       --border-strong: #c9c6bf;
-      --accent: #3b3a36;
-      --accent-tint: 99, 132, 220; /* soft indigo — ambient glow + focus ring */
+      --accent-tint: 99, 132, 220; /* soft indigo — the page's single accent */
+      --accent: rgb(var(--accent-tint));
       --hover: #efece6;
       --selected: #e7e3da;
       --danger: #c0392b;
@@ -68,6 +69,9 @@
       --glass-strong: rgba(255,255,255,0.78);
       --glass-highlight: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.08) 38%, rgba(255,255,255,0) 60%);
       --glass-blur: saturate(180%) blur(18px);
+      /* lighter pass for small chips & tiles — at their size the full 18px
+         frost is indistinguishable but far from free over animated backdrops */
+      --glass-blur-sm: blur(10px);
       --glass-shadow: 0 1px 0 rgba(255,255,255,0.55) inset, 0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent) inset, 0 10px 30px -14px rgba(17,17,17,0.22), 0 24px 60px -28px rgba(17,17,17,0.28);
       --glass-shadow-sm: 0 1px 0 var(--bevel) inset, 0 8px 22px -12px rgba(17,17,17,0.22);
       --sheen-opacity: 0.6;
@@ -88,8 +92,8 @@
         --field-bg: #16181d;
         --border: #24262c;
         --border-strong: #353841;
-        --accent: #b8bcc4;
         --accent-tint: 140, 160, 240;
+        --accent: rgb(var(--accent-tint));
         --hover: #1c1f25;
         --selected: #232730;
         --danger: #e74c3c;
@@ -109,6 +113,7 @@
       }
     }
     :root.theme-dark {
+      color-scheme: dark;
       --bg: #0e0f12;
       --fg: #ececec;
       --muted: #8a8f98;
@@ -117,8 +122,8 @@
       --field-bg: #16181d;
       --border: #24262c;
       --border-strong: #353841;
-      --accent: #b8bcc4;
       --accent-tint: 140, 160, 240;
+      --accent: rgb(var(--accent-tint));
       --hover: #1c1f25;
       --selected: #232730;
       --danger: #e74c3c;
@@ -136,6 +141,7 @@
       --glass-shadow-sm: 0 1px 0 var(--bevel) inset, 0 10px 28px -14px rgba(0,0,0,0.6);
       --sheen-opacity: 0.15;
     }
+    :root.theme-light { color-scheme: light; }
 
     * { box-sizing: border-box; }
 
@@ -281,10 +287,7 @@
     body.custom-bg #weather {
       background: var(--glass-bg);
       border-color: var(--glass-border);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
     }
-    body.custom-bg #weather .w-cond { border-left-color: var(--glass-border); }
 
     /* ====== Greeting, clock & date ====== */
     #greeting {
@@ -346,8 +349,8 @@
       border: 1px solid var(--glass-border);
       border-radius: 999px;
       background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
     }
 
     #date {
@@ -383,8 +386,8 @@
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       border-radius: 14px;
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
       box-shadow: var(--glass-shadow-sm);
       font-variant-numeric: tabular-nums;
       transition: background 0.2s ease, border-color 0.2s ease;
@@ -413,7 +416,7 @@
       letter-spacing: 0.04em;
       text-transform: capitalize;
       padding-left: 0.55rem;
-      border-left: 1px solid var(--border);
+      border-left: 1px solid var(--glass-border);
     }
 
     /* ====== Search ====== */
@@ -456,8 +459,8 @@
       border: 1px solid var(--glass-border);
       border-radius: 6px;
       background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
       box-shadow: 0 1px 0 var(--bevel) inset, 0 1px 0 rgba(0,0,0,0.04);
       pointer-events: none;
       opacity: 0.85;
@@ -483,7 +486,7 @@
       transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
     }
     #search::placeholder { color: var(--muted); }
-    #search:hover { border-color: var(--border-strong); }
+    #search:hover { border-color: color-mix(in srgb, var(--fg) 18%, var(--glass-border)); }
     #search:focus {
       background: color-mix(in srgb, var(--field-bg) 80%, transparent);
       border-color: color-mix(in srgb, var(--fg) 22%, var(--glass-border));
@@ -526,13 +529,11 @@
       transition: background 0.12s ease, transform 0.12s ease;
     }
     .sug .typed { color: var(--muted); }
-    .sug:hover, .sug.sel { background: var(--hover); }
+    .sug:hover, .sug.sel { background: color-mix(in srgb, var(--fg) 9%, transparent); }
     .sug.sel { transform: translateX(2px); }
     body.custom-bg #suggestions {
       background: var(--glass-strong);
       border-color: var(--glass-border);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
     }
     body.custom-bg .sug:hover, body.custom-bg .sug.sel { background: var(--glass-border); }
 
@@ -592,8 +593,8 @@
         linear-gradient(180deg,
           color-mix(in srgb, var(--field-bg) 80%, transparent),
           color-mix(in srgb, var(--field-bg) 55%, transparent));
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
       font-size: 1.25rem;
       font-weight: 700;
       letter-spacing: 0.01em;
@@ -660,8 +661,8 @@
       border: 1px solid var(--glass-border);
       border-radius: 14px;
       background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
       color: var(--muted);
       font-size: 1.1rem;
       cursor: pointer;
@@ -699,10 +700,9 @@
     }
     #overlay.open { display: flex; animation: fadeIn 0.2s ease; }
 
-    /* The panel and context menu sit on their own theme-coloured surface
-       (var(--bg)), so the --fg/--muted contrast overrides JS applies for
-       custom backgrounds must not leak into them — re-point both at the
-       canonical theme values. */
+    /* The panel and context menu are theme-toned glass, so the --fg/--muted
+       contrast overrides JS applies for custom backgrounds must not leak
+       into them — re-point both at the canonical theme values. */
     #panel, #ctx-menu {
       --fg: var(--theme-fg);
       --muted: var(--theme-muted);
@@ -766,8 +766,9 @@
     .field input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
     .field input[type="color"] {
       width: 48px; height: 32px; padding: 2px;
-      border: 1px solid var(--border); border-radius: 8px;
-      background: var(--field-bg); cursor: pointer;
+      border: 1px solid var(--glass-border); border-radius: 8px;
+      background: color-mix(in srgb, var(--field-bg) 60%, transparent);
+      cursor: pointer;
     }
     .field .coord { width: 110px; }
     .field input[type="range"] { width: 130px; accent-color: var(--accent); cursor: pointer; }
@@ -799,12 +800,16 @@
       transition: border-color 0.18s ease, box-shadow 0.2s ease, background 0.18s ease;
     }
     .link-row .remove {
-      border: 1px solid var(--border); border-radius: 8px;
-      background: var(--field-bg); color: var(--danger);
+      border: 1px solid var(--glass-border); border-radius: 8px;
+      background: color-mix(in srgb, var(--field-bg) 60%, transparent);
+      color: var(--danger);
       cursor: pointer; font-size: 1.1rem; line-height: 1;
       transition: border-color 0.15s ease, background 0.15s ease;
     }
-    .link-row .remove:hover { border-color: var(--danger); background: var(--hover); }
+    .link-row .remove:hover {
+      border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+      background: color-mix(in srgb, var(--danger) 12%, transparent);
+    }
     .editor-head { margin-bottom: 0.4rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 
     .hint { font-size: 0.75rem; color: var(--muted); margin: 0.25rem 0 0.75rem; }
@@ -814,7 +819,7 @@
       font-family: inherit; font-size: 0.9rem; color: var(--fg);
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
       border-radius: 10px; padding: 0.6rem 1.05rem; cursor: pointer;
       font-weight: 500;
       letter-spacing: 0.01em;
@@ -849,7 +854,8 @@
 
     .panel-actions {
       display: flex; justify-content: space-between; gap: 0.75rem;
-      margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+      margin-top: 1.75rem; padding-top: 1.25rem;
+      border-top: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
     }
     .panel-actions .left, .panel-actions .right { display: flex; gap: 0.75rem; }
 
@@ -874,9 +880,9 @@
       background: none; border: none; border-radius: 7px;
       padding: 0.45rem 0.7rem; cursor: pointer;
     }
-    #ctx-menu button:hover { background: var(--hover); }
+    #ctx-menu button:hover { background: color-mix(in srgb, var(--fg) 9%, transparent); }
     #ctx-menu button.danger { color: var(--danger); }
-    #ctx-menu .sep { height: 1px; background: var(--border); margin: 0.25rem 0.4rem; }
+    #ctx-menu .sep { height: 1px; background: color-mix(in srgb, var(--fg) 12%, transparent); margin: 0.25rem 0.4rem; }
 
     /* ====== Notes scratchpad (bottom-right) ====== */
     #notes {
@@ -895,8 +901,8 @@
       border: 1px solid var(--glass-border);
       border-radius: 14px;
       background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
       color: var(--muted);
       font-size: 1.1rem;
       cursor: pointer;
@@ -914,7 +920,7 @@
       box-shadow: var(--glass-shadow-sm), 0 8px 22px -10px rgba(var(--accent-tint), 0.35);
     }
     #notes-card {
-      /* own theme-coloured surface — same token re-point as #panel above */
+      /* theme-toned glass — same token re-point as #panel above */
       --fg: var(--theme-fg);
       --muted: var(--theme-muted);
       display: none;
@@ -967,7 +973,7 @@
     #welcome.closing { animation: wFadeOut 0.4s ease forwards; pointer-events: none; }
     @keyframes wFadeOut { to { opacity: 0; } }
     #welcome-card {
-      /* own theme-coloured surface — same token re-point as #panel */
+      /* theme-toned glass — same token re-point as #panel */
       --fg: var(--theme-fg);
       --muted: var(--theme-muted);
       width: min(460px, 100%);
@@ -1010,7 +1016,7 @@
       color: var(--fg);
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
       border-radius: 12px;
       padding: 0.55rem 0.95rem;
       cursor: pointer;
@@ -1039,7 +1045,7 @@
       border-radius: 10px;
       border: 1px solid var(--glass-border);
       background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur-sm);
       color: var(--fg);
       font-size: 1.25rem;
       line-height: 1;
@@ -1054,7 +1060,7 @@
       width: 26px;
       height: 26px;
       border-radius: 50%;
-      border: 2px solid var(--border);
+      border: 2px solid color-mix(in srgb, var(--fg) 14%, transparent);
       cursor: pointer;
       padding: 0;
       transition: transform 0.15s ease, border-color 0.15s ease;
@@ -1063,7 +1069,7 @@
     .w-swatch.sel { border-color: var(--accent); transform: scale(1.12); }
     .w-fields { text-align: left; margin: 1rem 0 0.4rem; }
     .w-hint { font-size: 0.75rem; color: var(--muted); }
-    .w-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
+    .w-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid color-mix(in srgb, var(--fg) 10%, transparent); }
     .w-dots { display: flex; gap: 0.45rem; }
     .w-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); transition: background 0.2s ease, transform 0.2s ease; }
     .w-dots i.on { background: var(--accent); transform: scale(1.3); }
@@ -2458,7 +2464,11 @@
     updateSearchPlaceholder(); renderNotes(); resetSuggestBackoff();
     idbDelete(BG_IMAGE_KEY).catch(() => {});
   });
-  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) requestClosePanel(); });
+  overlay.addEventListener("mousedown", (e) => {
+    // clientWidth excludes the scrollbar gutter — grabbing the overlay's own
+    // scrollbar (panel taller than the window) is not a backdrop click
+    if (e.target === overlay && e.clientX < overlay.clientWidth) requestClosePanel();
+  });
 
   /* ----- Quick-link context menu (right-click a tile) ----- */
   const ctxMenu = document.getElementById("ctx-menu");
@@ -2774,7 +2784,10 @@
   renderNotes();
   initWelcome();
   setInterval(loadWeather, 15 * 60 * 1000); // refresh weather every 15 min
-  window.addEventListener("load", () => input.focus());
+  window.addEventListener("load", () => {
+    // not on first boot — the welcome dialog owns focus until Finish
+    if (!welcomeEl.isConnected || welcomeEl.hidden) input.focus();
+  });
   </script>
 </body>
 </html>
