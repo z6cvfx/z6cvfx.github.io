@@ -860,7 +860,14 @@
       align-items: center;
     }
     .link-row { margin-bottom: 0.5rem; }
-    .link-row.dragging { opacity: 0.4; }
+    .link-row.dragging {
+      position: relative;
+      z-index: 2;
+      cursor: grabbing;
+      background: var(--glass-bg-strong);
+      border-radius: 10px;
+      box-shadow: var(--glass-shadow-sm);
+    }
     .link-row .grip {
       cursor: grab; display: flex; align-items: center; justify-content: center;
       color: var(--muted); user-select: none; font-size: 1rem;
@@ -2337,6 +2344,68 @@
     return String(s == null ? "" : s).replace(/"/g, "&quot;").replace(/</g, "&lt;");
   }
 
+  /* Drag-to-reorder. Pointer capture goes on the editor, not the grip:
+     reinserting the row mid-drag removes-and-readds the node, and a captured
+     node that leaves the DOM loses its capture — the drag went dead the
+     moment the first reorder happened. The editor never moves, so its
+     capture (plus window-level listeners as a fallback) survives the whole
+     gesture. */
+  let linkDrag = null;
+  function startLinkDrag(row, e) {
+    if (linkDrag) return;
+    const rect = row.getBoundingClientRect();
+    linkDrag = { row, id: e.pointerId, grabOffset: e.clientY - rect.top, dy: 0 };
+    row.classList.add("dragging");
+    try { linkEditor.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+  function moveLinkDrag(ev) {
+    if (!linkDrag || ev.pointerId !== linkDrag.id) return;
+    const row = linkDrag.row;
+
+    // displaced rows slide into place (FLIP) instead of teleporting
+    const after = rowAfterCursor(ev.clientY);
+    if (after !== row.nextElementSibling) {
+      const others = [...linkEditor.querySelectorAll(".link-row")].filter((r) => r !== row);
+      const tops = others.map((r) => r.getBoundingClientRect().top);
+      if (after == null) linkEditor.appendChild(row);
+      else linkEditor.insertBefore(row, after);
+      others.forEach((r, i) => {
+        const d = tops[i] - r.getBoundingClientRect().top;
+        if (d) r.animate([{ transform: "translateY(" + d + "px)" }, { transform: "none" }],
+                         { duration: 140, easing: "ease-out" });
+      });
+    }
+
+    // the dragged row tracks the pointer, clamped to the editor
+    row.style.transform = "";
+    const r = row.getBoundingClientRect();
+    const ed = linkEditor.getBoundingClientRect();
+    const wanted = Math.min(Math.max(ev.clientY - linkDrag.grabOffset, ed.top), ed.bottom - r.height);
+    linkDrag.dy = wanted - r.top;
+    row.style.transform = "translateY(" + linkDrag.dy + "px)";
+
+    // dragging near the viewport edge scrolls the settings overlay
+    const margin = 56;
+    if (ev.clientY < margin) overlay.scrollTop -= (margin - ev.clientY) * 0.35;
+    else if (ev.clientY > window.innerHeight - margin) {
+      overlay.scrollTop += (ev.clientY - window.innerHeight + margin) * 0.35;
+    }
+  }
+  function endLinkDrag(ev) {
+    if (!linkDrag || ev.pointerId !== linkDrag.id) return;
+    const { row, dy, id } = linkDrag;
+    linkDrag = null;
+    row.classList.remove("dragging");
+    row.style.transform = "";
+    if (dy) row.animate([{ transform: "translateY(" + dy + "px)" }, { transform: "none" }],
+                        { duration: 120, easing: "ease-out" });
+    try { linkEditor.releasePointerCapture(id); } catch (err) {}
+  }
+  window.addEventListener("pointermove", moveLinkDrag);
+  window.addEventListener("pointerup", endLinkDrag);
+  window.addEventListener("pointercancel", endLinkDrag);
+  linkEditor.addEventListener("lostpointercapture", endLinkDrag);
+
   function makeLinkRow(link = { label: "", url: "", icon: "" }) {
     const row = document.createElement("div");
     row.className = "link-row";
@@ -2354,22 +2423,7 @@
     grip.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
       e.preventDefault();
-      grip.setPointerCapture(e.pointerId);
-      row.classList.add("dragging");
-      const move = (ev) => {
-        const after = rowAfterCursor(ev.clientY);
-        if (after == null) linkEditor.appendChild(row);
-        else if (after !== row) linkEditor.insertBefore(row, after);
-      };
-      const stop = () => {
-        row.classList.remove("dragging");
-        grip.removeEventListener("pointermove", move);
-        grip.removeEventListener("pointerup", stop);
-        grip.removeEventListener("pointercancel", stop);
-      };
-      grip.addEventListener("pointermove", move);
-      grip.addEventListener("pointerup", stop);
-      grip.addEventListener("pointercancel", stop);
+      startLinkDrag(row, e);
     });
     grip.addEventListener("keydown", (e) => {
       if (e.key === "ArrowUp" && row.previousElementSibling) {
