@@ -1445,6 +1445,23 @@
             <option value="image">Image</option>
           </select>
         </div>
+        <div class="field" id="bg-contrast-field">
+          <label id="lbl-contrast">Text &amp; clock</label>
+          <div class="seg" id="set-contrast" role="radiogroup" aria-labelledby="lbl-contrast">
+            <button type="button" role="radio" data-value="auto">Auto</button>
+            <button type="button" role="radio" data-value="light">Light</button>
+            <button type="button" role="radio" data-value="dark">Dark</button>
+          </div>
+        </div>
+        <div class="field" id="bg-button-contrast-field">
+          <label id="lbl-button-contrast">Buttons</label>
+          <div class="seg" id="set-button-contrast" role="radiogroup" aria-labelledby="lbl-button-contrast">
+            <button type="button" role="radio" data-value="auto">Auto</button>
+            <button type="button" role="radio" data-value="light">Light</button>
+            <button type="button" role="radio" data-value="dark">Dark</button>
+          </div>
+        </div>
+        <p class="hint" id="bg-contrast-hint">Auto adapts each to your background. Pin either to Light or Dark to stop it switching — e.g. leave text on Auto but lock the buttons.</p>
         <div class="field" id="bg-preset-field">
           <label for="bg-preset">Preset palette</label>
           <select id="bg-preset"><option value="">Custom…</option></select>
@@ -1544,8 +1561,12 @@
     //   imageUrl is used for style "image"; imageFromFile means the picture
     //   lives in IndexedDB (chosen via the file picker) instead.
     //   dim darkens an image background (0-60 %); blur softens it (0-20 px).
+    //   contrast governs the text + clock tone; buttonContrast governs the
+    //   glass buttons/tiles. Each: "auto" tracks the background (and an
+    //   animated gradient live), "light"/"dark" pins it so it stops switching.
     background: { style: "theme", color1: "#667eea", color2: "#764ba2",
-                  imageUrl: "", imageFromFile: false, dim: 0, blur: 0 },
+                  imageUrl: "", imageFromFile: false, dim: 0, blur: 0,
+                  contrast: "auto", buttonContrast: "auto" },
 
     // Notes scratchpad (bottom-right). Only the toggle lives in config —
     // the text itself is stored under its own key (helium-homepage-notes).
@@ -1588,10 +1609,17 @@
 
   /* ----- Config load / save ----- */
   function mergeConfig(saved) {
+    const background = { ...DEFAULT_CONFIG.background, ...(saved.background || {}) };
+    // pre-split configs had a single `contrast` that governed buttons too —
+    // carry it onto buttonContrast so an upgrade doesn't change the look.
+    if (saved.background && saved.background.contrast != null
+        && saved.background.buttonContrast == null) {
+      background.buttonContrast = saved.background.contrast;
+    }
     return {
       ...DEFAULT_CONFIG, ...saved,
       version: DEFAULT_CONFIG.version, // saved.version describes the *source* format
-      background: { ...DEFAULT_CONFIG.background, ...(saved.background || {}) },
+      background,
       weather: { ...DEFAULT_CONFIG.weather, ...(saved.weather || {}) },
       notes: { ...DEFAULT_CONFIG.notes, ...(saved.notes || {}) }
     };
@@ -2022,21 +2050,29 @@
     } catch (e) { return null; }
   }
 
-  function applyContrast(darkBg) {
+  // The contrast tokens split into two groups that can be driven separately:
+  // the text + clock colour, and the glass buttons/tiles. Pinning one while
+  // the other stays on auto lets (say) the clock adapt while buttons hold.
+  const TEXT_KEYS = ["--fg", "--muted"];
+  const GLASS_KEYS = ["--glass-bg", "--glass-border", "--glass-strong"];
+  const ALL_CONTRAST_KEYS = TEXT_KEYS.concat(GLASS_KEYS);
+  const CONTRAST_STR = {
+    dark: {  // light text / glass over a dark backdrop
+      "--fg": "#f4f4f5", "--muted": "rgba(255,255,255,0.7)",
+      "--glass-bg": "rgba(255,255,255,0.10)", "--glass-border": "rgba(255,255,255,0.22)",
+      "--glass-strong": "rgba(18,20,26,0.68)",
+    },
+    light: { // dark text / glass over a light backdrop
+      "--fg": "#16181d", "--muted": "rgba(0,0,0,0.55)",
+      "--glass-bg": "rgba(255,255,255,0.45)", "--glass-border": "rgba(255,255,255,0.65)",
+      "--glass-strong": "rgba(255,255,255,0.78)",
+    },
+  };
+  // Apply the canonical palette to a subset of tokens (default: all).
+  function applyContrast(darkBg, keys) {
+    const p = darkBg ? CONTRAST_STR.dark : CONTRAST_STR.light;
     const root = document.documentElement;
-    if (darkBg) {
-      root.style.setProperty("--fg", "#f4f4f5");
-      root.style.setProperty("--muted", "rgba(255,255,255,0.7)");
-      root.style.setProperty("--glass-bg", "rgba(255,255,255,0.10)");
-      root.style.setProperty("--glass-border", "rgba(255,255,255,0.22)");
-      root.style.setProperty("--glass-strong", "rgba(18,20,26,0.68)");
-    } else {
-      root.style.setProperty("--fg", "#16181d");
-      root.style.setProperty("--muted", "rgba(0,0,0,0.55)");
-      root.style.setProperty("--glass-bg", "rgba(255,255,255,0.45)");
-      root.style.setProperty("--glass-border", "rgba(255,255,255,0.65)");
-      root.style.setProperty("--glass-strong", "rgba(255,255,255,0.78)");
-    }
+    (keys || ALL_CONTRAST_KEYS).forEach((k) => root.style.setProperty(k, p[k]));
   }
 
   // Crossfade between the two contrast palettes above. Driven from JS rather
@@ -2066,18 +2102,19 @@
     if (fadeTimer) clearInterval(fadeTimer);
     fadeTimer = null; fadeState = null;
   }
-  function fadeContrast(darkBg, ms) {
+  function fadeContrast(darkBg, ms, keys) {
+    keys = keys || ALL_CONTRAST_KEYS;
     const to = darkBg ? CONTRAST_DARK_BG : CONTRAST_LIGHT_BG;
     const fromPalette = darkBg ? CONTRAST_LIGHT_BG : CONTRAST_DARK_BG;
     const from = {};
-    for (const k in to) from[k] = (fadeState && fadeState[k]) || fromPalette[k];
+    for (const k of keys) from[k] = (fadeState && fadeState[k]) || fromPalette[k];
     cancelContrastFade();
     const root = document.documentElement, t0 = performance.now();
     fadeTimer = setInterval(() => {
       const p = Math.min((performance.now() - t0) / ms, 1);
       const e = p * (2 - p); // ease-out
       const cur = {};
-      for (const k in to) {
+      for (const k of keys) {
         const c = from[k].map((v, i) => v + (to[k][i] - v) * e);
         cur[k] = c;
         root.style.setProperty(k,
@@ -2086,7 +2123,7 @@
       fadeState = cur;
       if (p >= 1) {
         cancelContrastFade();
-        applyContrast(darkBg); // land exactly on the canonical palette
+        applyContrast(darkBg, keys); // land exactly on the canonical palette
       }
     }, 16);
   }
@@ -2104,7 +2141,7 @@
     animTimer = null; animDarkText = null;
     cancelContrastFade(); // a leftover frame must not write tokens applyBackground just reset
   }
-  function startAnimContrast(c1, c2) {
+  function startAnimContrast(c1, c2, keys) {
     stopAnimContrast();
     const l1 = brightness(c1), l2 = brightness(c2);
     const clock = document.getElementById("clock");
@@ -2132,8 +2169,8 @@
         animDarkText = darkText;
         // first pick lands at page load (or on a background switch): apply it
         // instantly so the crossfade only smooths real flips
-        if (first) applyContrast(!darkText);
-        else fadeContrast(!darkText, 800);
+        if (first) applyContrast(!darkText, keys);
+        else fadeContrast(!darkText, 800, keys);
       }
     };
     animTimer = setInterval(tick, 400);
@@ -2185,8 +2222,19 @@
       darkBg = true;
     }
 
-    applyContrast(darkBg);
-    if (b.style === "animated") startAnimContrast(c1, c2);
+    // Text/clock and the glass buttons each pick their own tone: "auto" tracks
+    // the background, "light"/"dark" pins the group so it stops switching.
+    const textMode = b.contrast || "auto";
+    const btnMode = b.buttonContrast || "auto";
+    const resolve = (m) => m === "light" ? true : m === "dark" ? false : darkBg;
+    applyContrast(resolve(textMode), TEXT_KEYS);
+    applyContrast(resolve(btnMode), GLASS_KEYS);
+    // the live sampler runs only for whichever groups are still on auto
+    if (b.style === "animated") {
+      const autoKeys = (textMode === "auto" ? TEXT_KEYS : [])
+        .concat(btnMode === "auto" ? GLASS_KEYS : []);
+      if (autoKeys.length) startAnimContrast(c1, c2, autoKeys);
+    }
     body.classList.add("custom-bg");
   }
 
@@ -2218,7 +2266,10 @@
       bgImageEl.style.inset = blur ? `${-blur * 2}px` : "";
       const lum = imageBrightness(img);
       const seen = lum == null ? null : lum * (1 - dim); // dim darkens what's seen
-      applyContrast(seen == null ? true : seen < 0.55);  // unreadable → assume dark
+      const darkBg = seen == null ? true : seen < 0.55;  // unreadable → assume dark
+      const resolve = (m) => m === "light" ? true : m === "dark" ? false : darkBg;
+      applyContrast(resolve(b.contrast || "auto"), TEXT_KEYS);
+      applyContrast(resolve(b.buttonContrast || "auto"), GLASS_KEYS);
       document.body.classList.add("custom-bg", "bg-image-on");
     };
     img.src = src; // on error, the theme background simply stays
@@ -2326,6 +2377,8 @@
   const bgBlur    = document.getElementById("bg-blur");
   const bgDimVal  = document.getElementById("bg-dim-val");
   const bgBlurVal = document.getElementById("bg-blur-val");
+  const setContrast = segControl("set-contrast");
+  const setButtonContrast = segControl("set-button-contrast");
   const setNotes  = document.getElementById("set-notes");
 
   // Image-picker state while the panel is open: whether the saved config's
@@ -2463,6 +2516,10 @@
     document.getElementById("bg-image-hint").style.display = showImg ? "" : "none";
     document.getElementById("bg-dim-field").style.display = showImg ? "" : "none";
     document.getElementById("bg-blur-field").style.display = showImg ? "" : "none";
+    const custom = style !== "theme";
+    document.getElementById("bg-contrast-field").style.display = custom ? "" : "none";
+    document.getElementById("bg-button-contrast-field").style.display = custom ? "" : "none";
+    document.getElementById("bg-contrast-hint").style.display = custom ? "" : "none";
   }
   function updateEngineFieldVisibility() {
     const show = setEngine.value === "custom";
@@ -2505,7 +2562,9 @@
       imageUrl: url,
       imageFromFile: panelImageFromFile && !url,
       dim: parseInt(bgDim.value, 10) || 0,
-      blur: parseInt(bgBlur.value, 10) || 0
+      blur: parseInt(bgBlur.value, 10) || 0,
+      contrast: setContrast.value,
+      buttonContrast: setButtonContrast.value
     };
   }
   function previewBackground() {
@@ -2520,6 +2579,8 @@
   bgColor1.addEventListener("input", previewBackground);
   bgColor2.addEventListener("input", previewBackground);
   bgImageUrl.addEventListener("change", previewBackground);
+  setContrast.addEventListener("change", previewBackground);
+  setButtonContrast.addEventListener("change", previewBackground);
   // Sliders fire continuously while dragged; reloading the image (and its
   // IndexedDB read) on every tick is wasteful, so the preview is debounced.
   function updateRangeLabels() {
@@ -2582,6 +2643,9 @@
     bgImageUrl.value = bg.imageUrl || "";
     bgDim.value = bg.dim || 0;
     bgBlur.value = bg.blur || 0;
+    const contrastMode = (v) => v === "light" || v === "dark" ? v : "auto";
+    setContrast.value = contrastMode(bg.contrast);
+    setButtonContrast.value = contrastMode(bg.buttonContrast);
     updateRangeLabels();
     panelImageFromFile = !!bg.imageFromFile;
     panelImagePicked = false;
