@@ -519,6 +519,11 @@
       transition: background 0.12s ease, transform 0.12s ease;
     }
     .sug .typed { color: var(--muted); }
+    /* On a custom background the dropdown is a glass surface whose tone tracks
+       the button/glass contrast — its text must contrast with that panel, not
+       the page, so it uses the glass foreground (white on a dark panel). */
+    body.custom-bg .sug { color: var(--glass-fg); }
+    body.custom-bg .sug .typed { color: var(--glass-fg-muted); }
     .sug:hover, .sug.sel { background: color-mix(in srgb, var(--fg) 9%, transparent); }
     .sug.sel { transform: translateX(2px); }
     body.custom-bg #suggestions {
@@ -2054,18 +2059,20 @@
   // the text + clock colour, and the glass buttons/tiles. Pinning one while
   // the other stays on auto lets (say) the clock adapt while buttons hold.
   const TEXT_KEYS = ["--fg", "--muted"];
-  const GLASS_KEYS = ["--glass-bg", "--glass-border", "--glass-strong"];
+  const GLASS_KEYS = ["--glass-bg", "--glass-border", "--glass-strong", "--glass-fg", "--glass-fg-muted"];
   const ALL_CONTRAST_KEYS = TEXT_KEYS.concat(GLASS_KEYS);
   const CONTRAST_STR = {
     dark: {  // light text / glass over a dark backdrop
       "--fg": "#f4f4f5", "--muted": "rgba(255,255,255,0.7)",
       "--glass-bg": "rgba(255,255,255,0.10)", "--glass-border": "rgba(255,255,255,0.22)",
       "--glass-strong": "rgba(18,20,26,0.68)",
+      "--glass-fg": "#f4f4f5", "--glass-fg-muted": "rgba(255,255,255,0.7)",
     },
     light: { // dark text / glass over a light backdrop
       "--fg": "#16181d", "--muted": "rgba(0,0,0,0.55)",
       "--glass-bg": "rgba(255,255,255,0.45)", "--glass-border": "rgba(255,255,255,0.65)",
       "--glass-strong": "rgba(255,255,255,0.78)",
+      "--glass-fg": "#16181d", "--glass-fg-muted": "rgba(0,0,0,0.55)",
     },
   };
   // Apply the canonical palette to a subset of tokens (default: all).
@@ -2086,6 +2093,8 @@
     "--glass-bg": [255, 255, 255, 0.10],
     "--glass-border": [255, 255, 255, 0.22],
     "--glass-strong": [18, 20, 26, 0.68],
+    "--glass-fg": [244, 244, 245, 1],
+    "--glass-fg-muted": [255, 255, 255, 0.7],
   };
   const CONTRAST_LIGHT_BG = {  // dark text over a light backdrop
     "--fg": [22, 24, 29, 1],
@@ -2093,6 +2102,8 @@
     "--glass-bg": [255, 255, 255, 0.45],
     "--glass-border": [255, 255, 255, 0.65],
     "--glass-strong": [255, 255, 255, 0.78],
+    "--glass-fg": [22, 24, 29, 1],
+    "--glass-fg-muted": [0, 0, 0, 0.55],
   };
   // Timer-driven (not requestAnimationFrame): rAF stalls in background tabs
   // and never fires at all in some headless contexts, which would strand the
@@ -2192,7 +2203,7 @@
     body.style.backgroundAttachment = ""; body.style.animation = "";
     bgImageEl.style.backgroundImage = ""; bgImageEl.style.filter = "";
     bgImageEl.style.inset = "";
-    ["--fg","--muted","--glass-bg","--glass-border","--glass-strong","--aurora1","--aurora2"]
+    ["--fg","--muted","--glass-bg","--glass-border","--glass-strong","--glass-fg","--glass-fg-muted","--aurora1","--aurora2"]
       .forEach((p) => root.style.removeProperty(p));
     if (bgObjectUrl) { URL.revokeObjectURL(bgObjectUrl); bgObjectUrl = null; }
     stopAnimContrast();
