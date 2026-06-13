@@ -44,19 +44,15 @@
       --theme-fg: #14161a;
       --theme-muted: #6b7280;
       --field-bg: #ffffff;
-      --border: #e6e4df;
       --border-strong: #c9c6bf;
       --accent-tint: 99, 132, 220; /* soft indigo — the page's single accent */
       --accent: rgb(var(--accent-tint));
       --hover: #efece6;
-      --selected: #e7e3da;
       --danger: #c0392b;
       /* faint top bevel shared by several surface shadows */
       --bevel: rgba(255,255,255,0.5);
-      /* drop shadows — soft, slightly bevelled */
-      --shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 1px 2px rgba(17,17,17,0.04), 0 8px 24px -10px rgba(17,17,17,0.10);
+      /* lifted drop shadow (focused search field) */
       --shadow-hover: 0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 6px rgba(17,17,17,0.06), 0 18px 40px -14px rgba(17,17,17,0.18);
-      --shadow-panel: 0 1px 0 rgba(255,255,255,0.9) inset, 0 30px 80px -20px rgba(17,17,17,0.30), 0 12px 30px -10px rgba(17,17,17,0.18);
       --ring: 0 0 0 4px rgba(60, 90, 200, 0.14);
       /* glass tokens — frosted surfaces everywhere; JS overrides --glass-bg /
          --glass-border / --glass-strong inline for contrast against custom
@@ -75,6 +71,8 @@
       --glass-shadow: 0 1px 0 rgba(255,255,255,0.55) inset, 0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent) inset, 0 10px 30px -14px rgba(17,17,17,0.22), 0 24px 60px -28px rgba(17,17,17,0.28);
       --glass-shadow-sm: 0 1px 0 var(--bevel) inset, 0 8px 22px -12px rgba(17,17,17,0.22);
       --sheen-opacity: 0.6;
+      /* post-blur dither tile shared by the overlay scrims — see #overlay */
+      --dither: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E");
       --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
     }
@@ -90,17 +88,13 @@
         --theme-fg: #ececec;
         --theme-muted: #8a8f98;
         --field-bg: #16181d;
-        --border: #24262c;
         --border-strong: #353841;
         --accent-tint: 140, 160, 240;
         --accent: rgb(var(--accent-tint));
         --hover: #1c1f25;
-        --selected: #232730;
         --danger: #e74c3c;
         --bevel: rgba(255,255,255,0.06);
-        --shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.45), 0 12px 28px -12px rgba(0,0,0,0.55);
         --shadow-hover: 0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 6px rgba(0,0,0,0.5), 0 22px 50px -16px rgba(0,0,0,0.7);
-        --shadow-panel: 0 1px 0 rgba(255,255,255,0.05) inset, 0 34px 90px -24px rgba(0,0,0,0.75);
         --ring: 0 0 0 4px rgba(120, 150, 230, 0.22);
         --glass-bg: color-mix(in srgb, var(--field-bg) 50%, transparent);
         --glass-bg-strong: color-mix(in srgb, var(--field-bg) 70%, transparent);
@@ -120,17 +114,13 @@
       --theme-fg: #ececec;
       --theme-muted: #8a8f98;
       --field-bg: #16181d;
-      --border: #24262c;
       --border-strong: #353841;
       --accent-tint: 140, 160, 240;
       --accent: rgb(var(--accent-tint));
       --hover: #1c1f25;
-      --selected: #232730;
       --danger: #e74c3c;
       --bevel: rgba(255,255,255,0.06);
-      --shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.45), 0 12px 28px -12px rgba(0,0,0,0.55);
       --shadow-hover: 0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 6px rgba(0,0,0,0.5), 0 22px 50px -16px rgba(0,0,0,0.7);
-      --shadow-panel: 0 1px 0 rgba(255,255,255,0.05) inset, 0 34px 90px -24px rgba(0,0,0,0.75);
       --ring: 0 0 0 4px rgba(120, 150, 230, 0.22);
       --glass-bg: color-mix(in srgb, var(--field-bg) 50%, transparent);
       --glass-bg-strong: color-mix(in srgb, var(--field-bg) 70%, transparent);
@@ -688,7 +678,7 @@
       /* post-blur dither: the backdrop blur averages away the page's own
          grain, re-exposing gradient banding under the darkened scrim —
          re-noise above the blur to break the bands up again. */
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E");
+      background-image: var(--dither);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       display: none;
@@ -735,14 +725,68 @@
     }
     #panel > * { position: relative; z-index: 1; }
     #panel h2 { margin: 0 0 1.25rem; font-size: 1.35rem; font-weight: 600; letter-spacing: -0.01em; }
-    #panel h3 {
-      margin: 1.6rem 0 0.75rem;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
-      color: var(--muted);
-      font-weight: 600;
+    /* Tab bar — sections swap in place instead of stacking into one column */
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      padding: 4px;
+      background: color-mix(in srgb, var(--field-bg) 45%, transparent);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      margin-bottom: 1.3rem;
     }
+    .tab {
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 9px;
+      padding: 0.5rem 0.25rem;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.18s ease, box-shadow 0.2s ease;
+    }
+    .tab:hover { color: var(--fg); }
+    .tab[aria-selected="true"] {
+      color: var(--fg);
+      font-weight: 600;
+      background: var(--glass-bg-strong);
+      box-shadow: 0 1px 0 var(--bevel) inset, 0 2px 8px -5px rgba(17,17,17,0.35);
+    }
+    .tab-page { min-height: var(--tab-page-min, 176px); animation: fadeUp 0.22s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .tab-page[hidden] { display: none; }
+
+    /* Inline segmented choice (theme, clock, units, icon source) */
+    .seg {
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      background: color-mix(in srgb, var(--field-bg) 45%, transparent);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+    }
+    .seg button {
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 7px;
+      padding: 0.35rem 0.7rem;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.18s ease;
+    }
+    .seg button:hover { color: var(--fg); }
+    .seg button.on {
+      color: var(--fg);
+      font-weight: 600;
+      background: var(--glass-bg-strong);
+      box-shadow: 0 1px 0 var(--bevel) inset, 0 1px 5px -3px rgba(17,17,17,0.4);
+    }
+    .pair { display: flex; gap: 0.45rem; align-items: center; }
 
     .field { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.85rem; }
     .field label { font-size: 0.95rem; }
@@ -763,7 +807,40 @@
       border-color: color-mix(in srgb, var(--fg) 28%, var(--glass-border));
       box-shadow: var(--ring);
     }
-    .field input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+    /* Toggle switch (restyled checkbox — .checked behaviour untouched) */
+    .field input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+      margin: 0;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--fg) 16%, transparent);
+      border: 1px solid var(--glass-border);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .field input[type="checkbox"]::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(17,17,17,0.35);
+      transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .field input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--glass-border));
+    }
+    .field input[type="checkbox"]:checked::after { transform: translateX(18px); }
+    /* appearance:none removes the native focus indicator — restore one */
+    .field input[type="checkbox"]:focus-visible { box-shadow: var(--ring); }
     .field input[type="color"] {
       width: 48px; height: 32px; padding: 2px;
       border: 1px solid var(--glass-border); border-radius: 8px;
@@ -776,7 +853,7 @@
     .field .range-val { font-size: 0.8rem; color: var(--muted); min-width: 2.8em; text-align: right; font-variant-numeric: tabular-nums; }
 
     /* ====== Quick links editor ====== */
-    .link-row, .editor-head {
+    .link-row {
       display: grid;
       grid-template-columns: 24px 1fr 1.4fr 52px 30px;
       gap: 0.5rem;
@@ -791,7 +868,6 @@
       border-radius: 6px;
     }
     .link-row .grip:active { cursor: grabbing; }
-    .link-row .grip:focus-visible { outline: 2px solid var(--border-strong); outline-offset: 1px; }
     .link-row input {
       width: 100%; font-family: inherit; font-size: 0.85rem; color: var(--fg);
       background: color-mix(in srgb, var(--field-bg) 60%, transparent);
@@ -810,7 +886,6 @@
       border-color: color-mix(in srgb, var(--danger) 55%, transparent);
       background: color-mix(in srgb, var(--danger) 12%, transparent);
     }
-    .editor-head { margin-bottom: 0.4rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 
     .hint { font-size: 0.75rem; color: var(--muted); margin: 0.25rem 0 0.75rem; }
 
@@ -831,7 +906,6 @@
       border-color: color-mix(in srgb, var(--fg) 22%, var(--glass-border));
     }
     .btn:active { transform: translateY(1px); }
-    .btn:focus-visible { box-shadow: var(--ring); outline: none; }
     .btn.primary {
       color: var(--field-bg);
       font-weight: 600;
@@ -965,7 +1039,7 @@
       padding: 1.5rem;
       background-color: rgba(0,0,0,0.35);
       /* same post-blur dither as #overlay — see comment there */
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E");
+      background-image: var(--dither);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
@@ -1074,6 +1148,17 @@
     .w-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); transition: background 0.2s ease, transform 0.2s ease; }
     .w-dots i.on { background: var(--accent); transform: scale(1.3); }
 
+    /* visually hidden, still read by screen readers (welcome announcements) */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
     /* ====== Selection & keyboard focus ====== */
     ::selection {
       background: rgba(var(--accent-tint), 0.32);
@@ -1101,6 +1186,15 @@
       scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
     }
 
+    /* ====== Increased contrast — firm up the quiet glass edges ====== */
+    @media (prefers-contrast: more) {
+      :root {
+        --glass-border: color-mix(in srgb, var(--fg) 38%, transparent);
+        --muted: color-mix(in srgb, var(--fg) 75%, var(--bg));
+        --theme-muted: color-mix(in srgb, var(--theme-fg) 75%, var(--bg));
+      }
+    }
+
     /* ====== Reduced transparency — swap frosted surfaces for solid ones ====== */
     @media (prefers-reduced-transparency: reduce) {
       #search, #search:focus, #suggestions, #weather, #settings-btn, #notes-btn,
@@ -1112,6 +1206,8 @@
         backdrop-filter: none;
         background: var(--field-bg);
       }
+      .tabs, .seg { backdrop-filter: none; background: var(--field-bg); }
+      .tab[aria-selected="true"], .seg button.on { background: var(--hover); }
       .btn:hover, .w-opt:not(.sel):hover, .w-arrow:hover,
       #settings-btn:hover, #notes-btn:hover, #weather:hover,
       .link:hover .icon, .link:focus-visible .icon { background: var(--hover); }
@@ -1131,7 +1227,8 @@
   <div id="grain"></div>
 
   <div id="weather" aria-live="polite"></div>
-  <button id="settings-btn" title="Settings" aria-label="Settings">⚙</button>
+  <button id="settings-btn" title="Settings" aria-label="Settings"
+          aria-haspopup="dialog" aria-expanded="false">⚙</button>
 
   <div id="greeting" class="reveal">&nbsp;</div>
   <div id="clock" class="reveal">--:--</div>
@@ -1171,6 +1268,7 @@
   <!-- First-boot welcome (shown only when no saved settings exist yet) -->
   <div id="welcome" hidden>
     <div id="welcome-card" role="dialog" aria-modal="true" aria-label="Welcome">
+      <span id="w-live" class="sr-only" aria-live="polite"></span>
       <div class="w-step" data-step="0">
         <div><img id="w-icon" alt=""></div>
         <h1>Welcome to Element2</h1>
@@ -1233,152 +1331,158 @@
   <div id="overlay">
     <div id="panel" role="dialog" aria-modal="true" aria-label="Settings" tabindex="-1">
       <h2>Settings</h2>
-
-      <div class="field">
-        <label for="set-theme">Theme</label>
-        <select id="set-theme">
-          <option value="auto">Auto (system)</option>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="set-clock">Clock format</label>
-        <select id="set-clock">
-          <option value="24hr">24-hour</option>
-          <option value="12hr">12-hour</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="set-engine">Search engine</label>
-        <select id="set-engine"></select>
-      </div>
-      <div class="field" id="custom-engine-field">
-        <label for="set-custom-engine">Custom search URL</label>
-        <input type="text" id="set-custom-engine" placeholder="https://example.com/search?q=%s">
-      </div>
-      <p class="hint" id="custom-engine-hint">%s is replaced with your query (appended if omitted).</p>
-      <div class="field">
-        <label for="set-suggest">Search suggestions</label>
-        <input type="checkbox" id="set-suggest">
-      </div>
-      <div class="field" id="suggest-relay-field">
-        <label for="set-suggest-relay">Suggestions relay URL</label>
-        <input type="text" id="set-suggest-relay" placeholder="Optional — https://…/?q=%s">
-      </div>
-      <p class="hint" id="suggest-relay-hint">Suggestions are fetched from DuckDuckGo as you type. If none appear (the official API refuses cross-site reads on some hosts), point this at a relay you control — %s is replaced with the query.</p>
-      <div class="field">
-        <label for="set-favicons">Use site icons (favicons)</label>
-        <input type="checkbox" id="set-favicons">
-      </div>
-      <div class="field" id="favicon-source-field">
-        <label for="set-favicon-source">Icon source</label>
-        <select id="set-favicon-source">
-          <option value="duckduckgo">DuckDuckGo</option>
-          <option value="google">Google (sharper)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="set-newtab">Open links in a new tab</label>
-        <input type="checkbox" id="set-newtab">
+      <div class="tabs" id="panel-tabs" role="tablist" aria-label="Settings sections">
+        <button type="button" class="tab" id="ptab-general" role="tab" aria-selected="true" aria-controls="tab-general">General</button>
+        <button type="button" class="tab" id="ptab-widgets" role="tab" aria-selected="false" aria-controls="tab-widgets" tabindex="-1">Widgets</button>
+        <button type="button" class="tab" id="ptab-background" role="tab" aria-selected="false" aria-controls="tab-background" tabindex="-1">Background</button>
+        <button type="button" class="tab" id="ptab-links" role="tab" aria-selected="false" aria-controls="tab-links" tabindex="-1">Links</button>
       </div>
 
-      <h3>Widgets</h3>
-      <div class="field">
-        <label for="set-greeting">Show greeting</label>
-        <input type="checkbox" id="set-greeting">
-      </div>
-      <div class="field">
-        <label for="set-name">Your name (for the greeting)</label>
-        <input type="text" id="set-name" placeholder="Optional">
-      </div>
-      <div class="field">
-        <label for="set-notes">Show notes pad</label>
-        <input type="checkbox" id="set-notes">
-      </div>
-      <div class="field">
-        <label for="set-weather-on">Show weather</label>
-        <input type="checkbox" id="set-weather-on">
-      </div>
-      <div class="field">
-        <label for="set-geo">Use my location</label>
-        <input type="checkbox" id="set-geo">
-      </div>
-      <div class="field">
-        <label for="set-units">Temperature units</label>
-        <select id="set-units">
-          <option value="celsius">Celsius (°C)</option>
-          <option value="fahrenheit">Fahrenheit (°F)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="set-lat">Latitude / Longitude</label>
-        <span>
-          <input type="text" class="coord" id="set-lat" placeholder="51.5074">
-          <input type="text" class="coord" id="set-lon" placeholder="-0.1278">
-        </span>
-      </div>
-      <p class="hint">Lat/Lon are used when "Use my location" is off or denied.</p>
+      <section class="tab-page" id="tab-general" role="tabpanel" aria-labelledby="ptab-general">
+        <div class="field">
+          <label id="lbl-theme">Theme</label>
+          <div class="seg" id="set-theme" role="radiogroup" aria-labelledby="lbl-theme">
+            <button type="button" role="radio" data-value="auto">Auto</button>
+            <button type="button" role="radio" data-value="light">Light</button>
+            <button type="button" role="radio" data-value="dark">Dark</button>
+          </div>
+        </div>
+        <div class="field">
+          <label id="lbl-clock">Clock</label>
+          <div class="seg" id="set-clock" role="radiogroup" aria-labelledby="lbl-clock">
+            <button type="button" role="radio" data-value="24hr">24-hour</button>
+            <button type="button" role="radio" data-value="12hr">12-hour</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="set-engine">Search engine</label>
+          <select id="set-engine"></select>
+        </div>
+        <div class="field" id="custom-engine-field">
+          <label for="set-custom-engine">Custom URL</label>
+          <input type="text" id="set-custom-engine" placeholder="https://example.com/search?q=%s">
+        </div>
+        <p class="hint" id="custom-engine-hint">%s is replaced with your query (appended if omitted).</p>
+        <div class="field">
+          <label for="set-suggest">Search suggestions</label>
+          <input type="checkbox" id="set-suggest">
+        </div>
+        <div class="field" id="suggest-relay-field">
+          <label for="set-suggest-relay">Relay URL</label>
+          <input type="text" id="set-suggest-relay" placeholder="Optional — https://…/?q=%s">
+        </div>
+        <p class="hint" id="suggest-relay-hint">If no suggestions appear, this host can't reach DuckDuckGo — point this at a relay you control (%s = query).</p>
+        <div class="field">
+          <label for="set-favicons">Site icons (favicons)</label>
+          <input type="checkbox" id="set-favicons">
+        </div>
+        <div class="field" id="favicon-source-field">
+          <label id="lbl-favsource">Icon source</label>
+          <div class="seg" id="set-favicon-source" role="radiogroup" aria-labelledby="lbl-favsource">
+            <button type="button" role="radio" data-value="duckduckgo">DuckDuckGo</button>
+            <button type="button" role="radio" data-value="google">Google</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="set-newtab">Open links in a new tab</label>
+          <input type="checkbox" id="set-newtab">
+        </div>
+      </section>
 
-      <h3>Background</h3>
-      <div class="field">
-        <label for="bg-style">Style</label>
-        <select id="bg-style">
-          <option value="theme">Theme default</option>
-          <option value="solid">Solid colour</option>
-          <option value="gradient">Gradient</option>
-          <option value="animated">Animated gradient</option>
-          <option value="aurora">Aurora (floating glow)</option>
-          <option value="image">Image</option>
-        </select>
-      </div>
-      <div class="field" id="bg-preset-field">
-        <label for="bg-preset">Preset palette</label>
-        <select id="bg-preset"><option value="">Custom…</option></select>
-      </div>
-      <div class="field" id="bg-color1-field">
-        <label for="bg-color1">Colour 1</label>
-        <input type="color" id="bg-color1" value="#667eea">
-      </div>
-      <div class="field" id="bg-color2-field">
-        <label for="bg-color2">Colour 2</label>
-        <input type="color" id="bg-color2" value="#764ba2">
-      </div>
-      <div class="field" id="bg-image-url-field">
-        <label for="bg-image-url">Image URL</label>
-        <input type="text" id="bg-image-url" placeholder="https://…/photo.jpg">
-      </div>
-      <div class="field" id="bg-image-file-field">
-        <label>Local image</label>
-        <span>
-          <button class="btn" id="bg-image-pick" type="button">Choose file…</button>
-          <button class="btn" id="bg-image-clear" type="button">Clear</button>
-        </span>
-      </div>
-      <p class="hint" id="bg-image-hint">A local image is stored in this browser and used when the URL above is empty. It isn't included in config exports.</p>
-      <input type="file" id="bg-image-file" accept="image/*" style="display:none">
-      <div class="field" id="bg-dim-field">
-        <label for="bg-dim">Darken image</label>
-        <span class="range-wrap">
-          <input type="range" id="bg-dim" min="0" max="60" step="5" value="0">
-          <output class="range-val" id="bg-dim-val" for="bg-dim">0%</output>
-        </span>
-      </div>
-      <div class="field" id="bg-blur-field">
-        <label for="bg-blur">Blur image</label>
-        <span class="range-wrap">
-          <input type="range" id="bg-blur" min="0" max="20" step="1" value="0">
-          <output class="range-val" id="bg-blur-val" for="bg-blur">0px</output>
-        </span>
-      </div>
+      <section class="tab-page" id="tab-widgets" role="tabpanel" aria-labelledby="ptab-widgets" hidden>
+        <div class="field">
+          <label for="set-greeting">Greeting</label>
+          <input type="checkbox" id="set-greeting">
+        </div>
+        <div class="field" id="greet-name-field">
+          <label for="set-name">Your name</label>
+          <input type="text" id="set-name" placeholder="Optional">
+        </div>
+        <div class="field">
+          <label for="set-notes">Notes pad</label>
+          <input type="checkbox" id="set-notes">
+        </div>
+        <div class="field">
+          <label for="set-weather-on">Weather</label>
+          <input type="checkbox" id="set-weather-on">
+        </div>
+        <div class="field" id="wx-units-field">
+          <label id="lbl-units">Units</label>
+          <div class="seg" id="set-units" role="radiogroup" aria-labelledby="lbl-units">
+            <button type="button" role="radio" data-value="celsius">°C</button>
+            <button type="button" role="radio" data-value="fahrenheit">°F</button>
+          </div>
+        </div>
+        <div class="field" id="wx-geo-field">
+          <label for="set-geo">Use my location</label>
+          <input type="checkbox" id="set-geo">
+        </div>
+        <div class="field" id="wx-coords-field">
+          <label for="set-lat">Latitude / Longitude</label>
+          <span class="pair">
+            <input type="text" class="coord" id="set-lat" placeholder="51.5074">
+            <input type="text" class="coord" id="set-lon" placeholder="-0.1278">
+          </span>
+        </div>
+      </section>
 
-      <h3>Quick links</h3>
-      <p class="hint">Drag the ⠿ handle to reorder.</p>
-      <div class="editor-head">
-        <span></span><span>Label</span><span>URL</span><span>Icon</span><span></span>
-      </div>
-      <div id="link-editor"></div>
-      <button class="btn" id="add-link">+ Add link</button>
+      <section class="tab-page" id="tab-background" role="tabpanel" aria-labelledby="ptab-background" hidden>
+        <div class="field">
+          <label for="bg-style">Style</label>
+          <select id="bg-style">
+            <option value="theme">Theme default</option>
+            <option value="solid">Solid colour</option>
+            <option value="gradient">Gradient</option>
+            <option value="animated">Animated gradient</option>
+            <option value="aurora">Aurora (floating glow)</option>
+            <option value="image">Image</option>
+          </select>
+        </div>
+        <div class="field" id="bg-preset-field">
+          <label for="bg-preset">Preset palette</label>
+          <select id="bg-preset"><option value="">Custom…</option></select>
+        </div>
+        <div class="field" id="bg-colors-field">
+          <label for="bg-color1" id="bg-colors-label">Colours</label>
+          <span class="pair">
+            <input type="color" id="bg-color1" value="#667eea">
+            <input type="color" id="bg-color2" value="#764ba2">
+          </span>
+        </div>
+        <div class="field" id="bg-image-url-field">
+          <label for="bg-image-url">Image URL</label>
+          <input type="text" id="bg-image-url" placeholder="https://…/photo.jpg">
+        </div>
+        <div class="field" id="bg-image-file-field">
+          <label>Local image</label>
+          <span class="pair">
+            <button class="btn" id="bg-image-pick" type="button">Choose file…</button>
+            <button class="btn" id="bg-image-clear" type="button">Clear</button>
+          </span>
+        </div>
+        <p class="hint" id="bg-image-hint">Stored in this browser only — not included in config exports.</p>
+        <input type="file" id="bg-image-file" accept="image/*" style="display:none">
+        <div class="field" id="bg-dim-field">
+          <label for="bg-dim">Darken image</label>
+          <span class="range-wrap">
+            <input type="range" id="bg-dim" min="0" max="60" step="5" value="0">
+            <output class="range-val" id="bg-dim-val" for="bg-dim">0%</output>
+          </span>
+        </div>
+        <div class="field" id="bg-blur-field">
+          <label for="bg-blur">Blur image</label>
+          <span class="range-wrap">
+            <input type="range" id="bg-blur" min="0" max="20" step="1" value="0">
+            <output class="range-val" id="bg-blur-val" for="bg-blur">0px</output>
+          </span>
+        </div>
+      </section>
+
+      <section class="tab-page" id="tab-links" role="tabpanel" aria-labelledby="ptab-links" hidden>
+        <p class="hint">Drag the ⠿ handle to reorder. Icon is 1–2 letters, shown when site icons are off.</p>
+        <div id="link-editor"></div>
+        <button class="btn" id="add-link">+ Add link</button>
+      </section>
 
       <div class="panel-actions">
         <div class="left">
@@ -1711,8 +1815,9 @@
   let sugTyped = "";   // what the user actually typed (restored on Escape)
   let sugTimer = 0;
   let sugAbort = null;
-  let sugFails = 0;    // consecutive fetch failures — back off a blocked endpoint
-  function resetSuggestBackoff() { sugFails = 0; }
+  let sugFails = 0;    // consecutive fetch failures
+  let sugRetryAt = 0;  // back off a failing endpoint, but retry after a while
+  function resetSuggestBackoff() { sugFails = 0; sugRetryAt = 0; }
 
   function suggestUrlFor(q) {
     const enc = encodeURIComponent(q);
@@ -1793,7 +1898,12 @@
     } catch (e) {
       // Aborts are routine; real failures (offline, CORS-blocked host) count
       // toward the backoff so a blocked endpoint isn't hit on every keystroke.
-      if (!(e && e.name === "AbortError")) sugFails++;
+      // Three strikes rests the endpoint for a minute, then tries again — a
+      // brief offline spell shouldn't disable suggestions until next reload.
+      if (!(e && e.name === "AbortError")) {
+        sugFails++;
+        if (sugFails >= 3) { sugRetryAt = Date.now() + 60000; sugFails = 0; }
+      }
     }
   }
 
@@ -1801,7 +1911,7 @@
     const q = input.value.trim();
     sugTyped = q; // typing always resets the restore point
     clearTimeout(sugTimer);
-    if (!config.searchSuggestions || !q || sugFails >= 3) { closeSuggestions(); return; }
+    if (!config.searchSuggestions || !q || Date.now() < sugRetryAt) { closeSuggestions(); return; }
     sugTimer = setTimeout(() => fetchSuggestions(q), 160); // debounce keystrokes
   });
   input.addEventListener("blur", closeSuggestions);
@@ -2112,20 +2222,90 @@
   const settingsBtn = document.getElementById("settings-btn");
   const overlay   = document.getElementById("overlay");
   const panel     = document.getElementById("panel");
-  const setTheme  = document.getElementById("set-theme");
-  const setClock  = document.getElementById("set-clock");
+
+  // Segmented radio group exposing a select-like .value API, so
+  // populatePanel/readPanel treat it exactly like the <select> it replaced.
+  function segControl(id) {
+    const rootEl = document.getElementById(id);
+    const btns = [...rootEl.querySelectorAll("button")];
+    function set(v, fire) {
+      if (!btns.some((b) => b.dataset.value === v)) v = btns[0].dataset.value;
+      const prev = rootEl.dataset.value;
+      rootEl.dataset.value = v;
+      btns.forEach((b) => {
+        const on = b.dataset.value === v;
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-checked", on ? "true" : "false");
+        b.tabIndex = on ? 0 : -1; // roving tabindex: one tab stop per group
+      });
+      if (fire && v !== prev) rootEl.dispatchEvent(new Event("change"));
+    }
+    btns.forEach((b, i) => {
+      b.addEventListener("click", () => set(b.dataset.value, true));
+      b.addEventListener("keydown", (e) => {
+        const d = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1
+                : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        const next = btns[(i + d + btns.length) % btns.length];
+        set(next.dataset.value, true);
+        next.focus();
+      });
+    });
+    set(btns[0].dataset.value, false);
+    return {
+      get value() { return rootEl.dataset.value; },
+      set value(v) { set(v, false); },
+      addEventListener(type, fn) { rootEl.addEventListener(type, fn); }
+    };
+  }
+
+  // Tab bar: sections swap in place; openPanel resets to the first tab.
+  const panelTabs = [...document.querySelectorAll("#panel-tabs .tab")];
+  // The panel keeps one height on every tab: the General tab's. Measured
+  // while General is visible (its height shifts with disclosure toggles)
+  // and applied to all pages as min-height.
+  function syncTabHeight() {
+    const general = document.getElementById("tab-general");
+    if (general.hidden) return;
+    panel.style.removeProperty("--tab-page-min"); // measure natural height
+    const h = general.offsetHeight;
+    if (h > 0) panel.style.setProperty("--tab-page-min", h + "px");
+  }
+  function showPanelTab(tab) {
+    syncTabHeight(); // leaving General? capture its current height first
+    panelTabs.forEach((t) => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+  panelTabs.forEach((t, i) => {
+    t.addEventListener("click", () => showPanelTab(t));
+    t.addEventListener("keydown", (e) => {
+      const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!d) return;
+      e.preventDefault();
+      const next = panelTabs[(i + d + panelTabs.length) % panelTabs.length];
+      showPanelTab(next);
+      next.focus();
+    });
+  });
+  const setTheme  = segControl("set-theme");
+  const setClock  = segControl("set-clock");
   const setEngine = document.getElementById("set-engine");
   const setCustomEngine = document.getElementById("set-custom-engine");
   const setSuggest = document.getElementById("set-suggest");
   const setSuggestRelay = document.getElementById("set-suggest-relay");
   const setFav    = document.getElementById("set-favicons");
-  const setFavSource = document.getElementById("set-favicon-source");
+  const setFavSource = segControl("set-favicon-source");
   const setNewTab = document.getElementById("set-newtab");
   const setGreet  = document.getElementById("set-greeting");
   const setName   = document.getElementById("set-name");
   const setWxOn   = document.getElementById("set-weather-on");
   const setGeo    = document.getElementById("set-geo");
-  const setUnits  = document.getElementById("set-units");
+  const setUnits  = segControl("set-units");
   const setLat    = document.getElementById("set-lat");
   const setLon    = document.getElementById("set-lon");
   const linkEditor = document.getElementById("link-editor");
@@ -2220,8 +2400,9 @@
     const showC1 = style !== "theme" && style !== "image";
     const showC2 = style === "gradient" || style === "animated" || style === "aurora";
     const showImg = style === "image";
-    document.getElementById("bg-color1-field").style.display = showC1 ? "" : "none";
-    document.getElementById("bg-color2-field").style.display = showC2 ? "" : "none";
+    document.getElementById("bg-colors-field").style.display = showC1 ? "" : "none";
+    document.getElementById("bg-colors-label").textContent = showC2 ? "Colours" : "Colour";
+    bgColor2.style.display = showC2 ? "" : "none";
     document.getElementById("bg-preset-field").style.display = showC2 ? "" : "none";
     document.getElementById("bg-image-url-field").style.display = showImg ? "" : "none";
     document.getElementById("bg-image-file-field").style.display = showImg ? "" : "none";
@@ -2242,9 +2423,22 @@
     document.getElementById("suggest-relay-field").style.display = on ? "" : "none";
     document.getElementById("suggest-relay-hint").style.display = on ? "" : "none";
   }
+  function updateGreetingFieldVisibility() {
+    document.getElementById("greet-name-field").style.display = setGreet.checked ? "" : "none";
+  }
+  function updateWeatherFieldVisibility() {
+    const on = setWxOn.checked;
+    document.getElementById("wx-units-field").style.display = on ? "" : "none";
+    document.getElementById("wx-geo-field").style.display = on ? "" : "none";
+    // coords are the fallback for disabled/denied geolocation — only relevant with geo off
+    document.getElementById("wx-coords-field").style.display = on && !setGeo.checked ? "" : "none";
+  }
   setEngine.addEventListener("change", updateEngineFieldVisibility);
   setFav.addEventListener("change", updateFaviconFieldVisibility);
   setSuggest.addEventListener("change", updateSuggestFieldVisibility);
+  setGreet.addEventListener("change", updateGreetingFieldVisibility);
+  setWxOn.addEventListener("change", updateWeatherFieldVisibility);
+  setGeo.addEventListener("change", updateWeatherFieldVisibility);
 
   /* Live preview: background (and theme) changes apply immediately while the
      panel is open; Cancel/Escape reverts to the saved config. */
@@ -2342,6 +2536,8 @@
     updateEngineFieldVisibility();
     updateFaviconFieldVisibility();
     updateSuggestFieldVisibility();
+    updateGreetingFieldVisibility();
+    updateWeatherFieldVisibility();
 
     linkEditor.innerHTML = "";
     config.quickLinks.forEach((link) => linkEditor.appendChild(makeLinkRow(link)));
@@ -2394,18 +2590,28 @@
     };
   }
 
+  // Re-apply everything that reads config — used after bulk swaps (reset, import).
+  function refreshUi() {
+    applyTheme(); updateClock(); applyBackground(); renderLinks(); loadWeather();
+    updateSearchPlaceholder(); renderNotes(); resetSuggestBackoff();
+  }
+
   let lastFocus = null;
   let panelSnapshot = ""; // readPanel() JSON at open — baseline for the dirty check
   const openPanel = () => {
     lastFocus = document.activeElement;
+    settingsBtn.setAttribute("aria-expanded", "true");
+    showPanelTab(panelTabs[0]);
     populatePanel();
     panelSnapshot = JSON.stringify(readPanel());
     overlay.classList.add("open");
+    syncTabHeight(); // panel is rendered now — General is measurable
     const first = panel.querySelector("select, input:not([type=file]), button");
     (first || panel).focus();
   };
   const closePanel = () => {
     overlay.classList.remove("open");
+    settingsBtn.setAttribute("aria-expanded", "false");
     clearTimeout(previewTimer); // a queued slider preview must not fire after close
     applyTheme();
     applyBackground(); // revert any live preview to the saved config
@@ -2461,8 +2667,7 @@
     saveConfig(config);
     populatePanel();
     panelSnapshot = JSON.stringify(readPanel()); // panel now matches saved state
-    applyTheme(); updateClock(); applyBackground(); renderLinks(); loadWeather();
-    updateSearchPlaceholder(); renderNotes(); resetSuggestBackoff();
+    refreshUi();
     idbDelete(BG_IMAGE_KEY).catch(() => {});
   });
   overlay.addEventListener("mousedown", (e) => {
@@ -2474,7 +2679,15 @@
   /* ----- Quick-link context menu (right-click a tile) ----- */
   const ctxMenu = document.getElementById("ctx-menu");
   let ctxIdx = -1;
-  function closeCtxMenu() { ctxMenu.classList.remove("open"); ctxIdx = -1; }
+  function closeCtxMenu() {
+    // a keyboard flow leaves focus inside the menu — hand it back to the tile
+    if (ctxMenu.contains(document.activeElement)) {
+      const tile = linksEl.querySelector('.link[data-idx="' + ctxIdx + '"]');
+      if (tile) tile.focus();
+    }
+    ctxMenu.classList.remove("open");
+    ctxIdx = -1;
+  }
 
   linksEl.addEventListener("contextmenu", (e) => {
     const a = e.target.closest(".link");
@@ -2482,9 +2695,28 @@
     e.preventDefault();
     ctxIdx = Number(a.dataset.idx);
     ctxMenu.classList.add("open");
+    // keyboard invocations (menu key / Shift+F10) carry no pointer coords —
+    // anchor the menu to the tile instead of the screen corner, and move
+    // focus in so the arrow keys work.
+    let x = e.clientX, y = e.clientY;
+    if (!x && !y) {
+      const r = a.getBoundingClientRect();
+      x = r.left + r.width / 2;
+      y = r.top + r.height / 2;
+      ctxMenu.querySelector("button").focus();
+    }
     const pad = 8;
-    ctxMenu.style.left = Math.min(e.clientX, window.innerWidth - ctxMenu.offsetWidth - pad) + "px";
-    ctxMenu.style.top  = Math.min(e.clientY, window.innerHeight - ctxMenu.offsetHeight - pad) + "px";
+    ctxMenu.style.left = Math.min(x, window.innerWidth - ctxMenu.offsetWidth - pad) + "px";
+    ctxMenu.style.top  = Math.min(y, window.innerHeight - ctxMenu.offsetHeight - pad) + "px";
+  });
+  ctxMenu.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const items = [...ctxMenu.querySelectorAll("button")];
+    let j = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") j = (j + 1) % items.length;
+    else j = j <= 0 ? items.length - 1 : j - 1;
+    items[j].focus();
   });
   document.addEventListener("pointerdown", (e) => {
     if (ctxMenu.classList.contains("open") && !ctxMenu.contains(e.target)) closeCtxMenu();
@@ -2619,8 +2851,7 @@
         saveConfig(config);
         populatePanel();
         panelSnapshot = JSON.stringify(readPanel()); // panel now matches saved state
-        applyTheme(); updateClock(); applyBackground(); renderLinks(); loadWeather();
-        updateSearchPlaceholder(); renderNotes(); resetSuggestBackoff();
+        refreshUi();
       } catch (err) {
         alert("That file doesn't look like a valid settings export.");
       }
@@ -2721,6 +2952,11 @@
     document.getElementById("w-bg-next").addEventListener("click", () => cycleBg(1));
     palettes.style.visibility = "hidden"; // starts on "Theme default"
 
+    // Enter in the name field means "I'm done typing" — finish the wizard.
+    document.getElementById("w-name").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); wNext.click(); }
+    });
+
     function showStep(i, goingBack) {
       stepIdx = i;
       steps.forEach((s, idx) => {
@@ -2728,6 +2964,9 @@
         s.classList.toggle("from-back", idx === i && !!goingBack);
       });
       [...wDots.children].forEach((d, idx) => d.classList.toggle("on", idx === i));
+      const h = steps[i].querySelector("h1, h2");
+      document.getElementById("w-live").textContent =
+        "Step " + (i + 1) + " of " + steps.length + (h ? " — " + h.textContent : "");
       wBack.textContent = i === 0 ? "Skip" : "Back";
       wNext.textContent = i === 0 ? "Get started" : (i === steps.length - 1 ? "Finish" : "Next");
     }
